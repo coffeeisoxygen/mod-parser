@@ -9,13 +9,22 @@ from experiment.hvc_etl import HVCDataPaketETL  # type: ignore
 
 
 # --- Loguru bare setup with custom formatter for progress ---
-def formatter(record):
+def formatter(record: dict[str, Any]) -> str:
+    """Just formatting."""
     end = record["extra"].get("end", "\n")
-    return "[{time:HH:mm:ss}] {message}" + end + "{exception}"
+    level_color = {
+        "INFO": "<cyan>",
+        "WARNING": "<yellow>",
+        "ERROR": "<red>",
+        "SUCCESS": "<green>",
+        "DEBUG": "<blue>",
+    }.get(record["level"].name, "")
+    reset = "</>" if level_color else ""
+    return f"{level_color}{{level: <8}}{reset}: {{message}}" + end + "{exception}"
 
 
 logger.remove()  # Remove default handler
-logger.add(sys.stderr, format=formatter, level="INFO")
+logger.add(sys.stderr, format=formatter, level="INFO", colorize=True, enqueue=True) # type: ignore
 
 
 def main() -> None:
@@ -38,12 +47,22 @@ def main() -> None:
     paket_list = data.get("paket", [])
     etl = HVCDataPaketETL()
 
+    # Info input
+    input_char = len(json.dumps(paket_list))
+    input_count = len(paket_list)
+    logger.info(f"Input: {input_count} produk, {input_char} char")
+
     logger.bind(end="").info("Cleaning: ")
     cleaned = []
-    for i, row in enumerate(paket_list, 1):
+    for _i, row in enumerate(paket_list, 1):
         cleaned.append(etl.clean_paket_list([row])[0])
         logger.opt(raw=True).info(".")
     logger.opt(raw=True).info("\n")
+
+    # Info output
+    output_char = len(etl.format_response(cleaned))
+    output_count = len(cleaned)
+    logger.info(f"Output: {output_count} produk, {output_char} char")
 
     logger.info("Output satu baris:")
     logger.info(etl.format_response(cleaned))

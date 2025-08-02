@@ -26,8 +26,6 @@ class BasePaketETL:
         "DATA NATIONAL/",
         "LOCAL DATA/",
         "DATA DPI/",
-        "SMS ONNET/",
-        "VOICE ONNET/",
     ]
 
     def __init__(self, config=None):
@@ -49,25 +47,6 @@ class BasePaketETL:
         # Default: tidak ada filter, return semua paket
         return paket_list
 
-    def _process_quota_part(self, part, seen):
-        """Process a single quota part, return label or capitalized cleaned part if unique, else None."""
-        cleaned = part.strip().upper()
-        cleaned = self._remove_redundant_keywords(cleaned)
-        replaced = self._replace_keyword(cleaned)
-        label = replaced if replaced else None
-        if label:
-            if label not in seen:
-                seen.add(label)
-                return label
-        else:
-            cleaned_result = cleaned.strip()
-            if cleaned_result:
-                cap = self._capitalize_words(cleaned_result)
-                if cap not in seen:
-                    seen.add(cap)
-                    return cap
-        return None
-
     def clean_quota(self, quota):
         """
         Bersihkan dan normalisasi field quota dengan urutan modular:
@@ -81,9 +60,21 @@ class BasePaketETL:
         seen = set()
         parts = []
         for p in str(quota).split(","):
-            result = self._process_quota_part(p, seen)
-            if result:
-                parts.append(result)
+            cleaned = p.strip().upper()
+            cleaned = self._remove_redundant_keywords(cleaned)
+            replaced = self._replace_keyword(cleaned)
+            label = replaced if replaced else None
+            if label:
+                if label not in seen:
+                    parts.append(label)
+                    seen.add(label)
+            else:
+                cleaned_result = cleaned.strip()
+                if cleaned_result:
+                    cap = self._capitalize_words(cleaned_result)
+                    if cap not in seen:
+                        parts.append(cap)
+                        seen.add(cap)
         result = "+".join(parts).strip()
         return " ".join(result.split()) if result else ""
 
@@ -107,22 +98,19 @@ class BasePaketETL:
             cleaned.append(p)
         return cleaned
 
-    def format_response(self, paket_list, sort_by_name=True):
+    def format_response(self, paket_list):
         """
         Format output satu baris untuk semua kelas:
         id:productid#productname(quota)#total_#id:productid#productname(quota)#total_...
-        Jika sort_by_name=True, urutkan alphabetis by productName.
         """
-        if sort_by_name:
-            paket_list = sorted(
-                paket_list, key=lambda x: str(x.get("productName", "")).lower()
-            )
         result = []
         for paket in paket_list:
             pid = f"@{str(paket.get('productId', '-')).strip(' ,\t')}"
             pname = str(paket.get("productName", "")).strip(" ,\t")
             quota = str(paket.get("quota", "")).strip(" ,\t")
             total = str(paket.get("total_", "")).strip(" ,\t")
+            # Format: @productid#productname(quota)#total_ (tanpa '#' setelah total, antar paket langsung '@')
             part = f"{pid}#{pname}({quota})#{total}"
             result.append(part)
+        # Gabungkan: hilangkan '#' sebelum '@' berikutnya, dan tidak ada '#' di akhir
         return "".join(result)
