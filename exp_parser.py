@@ -1,4 +1,5 @@
-from .mlogger import logger
+import json
+from pathlib import Path
 
 
 class QuotaETL:
@@ -56,6 +57,19 @@ class QuotaETL:
         result = ", ".join(parts).strip()
         return " ".join(result.split()) if result else ""
 
+    # ======= Step 4: Format Output Akhir Paket =======
+    @staticmethod
+    def format_paket_output(paket: dict) -> str:
+        """Step 4: Format output akhir satu paket dengan separator |.
+
+        productId dibungkus # dan dipisah dengan | untuk setiap field.
+        """
+        pid = f"#{paket['productId'].strip()}#" if paket.get("productId") else ""
+        pname = paket.get("productName", "").strip()
+        quota = paket.get("quota", "").rstrip(", ").strip()
+        total = str(paket.get("total_", "")).strip()
+        return f"{pid}|{pname}|{quota}|{total}"
+
     # ======= ETL Paket List =======
     @classmethod
     def clean_paket_list(cls, paket_list: list[dict]) -> list[dict]:
@@ -85,58 +99,20 @@ class QuotaETL:
         return cleaned
 
 
-def transform_list_paket_response(
-    response_json: dict, trxid: str, tujuan: str, kolom: list[str] | None = None
-) -> str:
-    """Transformasi response list_paket menjadi format string dengan ETL.
+if __name__ == "__main__":
+    # Load sample.json
+    sample_path = Path(__file__).parent / "sample.json"
+    with open(sample_path, encoding="utf-8") as f:
+        data = json.load(f)
+    paket_list = data.get("paket", [])
+    # Hitung jumlah karakter pada sample.json (asli)
+    with open(sample_path, encoding="utf-8") as f:
+        raw_json = f.read()
+    print(f"sample json char = {len(raw_json)} char")
 
-    Menerapkan ETL (Extract, Transform, Load) pada data paket sebelum format output:
-    1. Filter paket berdasarkan productName prefix
-    2. Bersihkan dan transformasi quota (remove redundant, replace keywords)
-    3. Format output: trxid=[trxid]&to=[tujuan]&message=list paket = #productId#productName#total_ ...
-
-    Args:
-        response_json: Raw response JSON dari API
-        trxid: Transaction ID
-        tujuan: Nomor tujuan
-        kolom: List kolom yang ingin ditampilkan, default ['productId', 'productName', 'total_']
-    """
-    with logger.contextualize(trxid=trxid, tujuan=tujuan):
-        logger.debug(f"Raw response before transform: {response_json}")
-
-    # ETL: Extract, Transform, Load
-    paket_list = response_json.get("paket", [])
-    cleaned_paket_list = QuotaETL.clean_paket_list(paket_list)
-
-    message_parts = []
-    if not kolom:
-        kolom = ["productId", "productName", "total_"]
-    # Pastikan productId selalu di depan
-    if "productId" not in kolom:
-        kolom = ["productId", *kolom]
-
-    for paket in cleaned_paket_list:
-        product_id = str(paket.get("productId", ""))
-        # Ambil kolom lain selain productId
-        other_values = [str(paket.get(k, "")) for k in kolom if k != "productId"]
-        # Format: -productId#kolom1#kolom2-
-        part = f"-{product_id}"
-        if other_values:
-            part += "#" + "#".join(other_values)
-        part += "-"
-        message_parts.append(part)
-
-    # Gabungkan tanpa spasi antar paket, dan pastikan tidak ada double --
-    message = "list paket = " + "".join(message_parts)
-    # Hilangkan double dash jika ada (misal: -...--...-)
-    while "--" in message:
-        message = message.replace("--", "-")
-
-    result = f"trxid={trxid}&to={tujuan}&message={message}"
-
-    with logger.contextualize(trxid=trxid, tujuan=tujuan):
-        logger.info(
-            f"ETL transformation completed. Original pakets: {len(paket_list)}, After ETL: {len(cleaned_paket_list)}"
-        )
-
-    return result
+    cleaned = QuotaETL.clean_paket_list(paket_list)
+    # Gabungkan hasil ETL jadi satu baris string (paket dipisah |)
+    result_line = "|".join(QuotaETL.format_paket_output(p) for p in cleaned)
+    print("\nresult :\n")
+    print(result_line)
+    print(f"\nresult char = {len(result_line)} char")
