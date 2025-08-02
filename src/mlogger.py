@@ -406,6 +406,52 @@ class LoggerManager:
                 )
 
 
+# --- Logger khusus progress/debug (log di satu baris) ---
+import sys as _sys
+
+
+def _progress_formatter(record):
+    """Format log record for progress logging.
+
+    This formatter is used to log progress messages in a single line format.
+
+    Args:
+        record (_type_): Log record to format.
+
+    Returns:
+        _type_: Formatted log message as a string.
+
+    Example:
+        >>> from utils.mlogger import logger_progress
+        >>> logger_progress.debug("Processing item 1")
+        [12:34:56] Processing item 1
+    """
+    end = record["extra"].get("end", "\n")
+    return f"[{record['time']:%H:%M:%S}] {record['message']}" + end + "{exception}"
+
+
+logger_progress = loguru_logger.bind()
+_progress_handler_id = logger_progress.add(
+    _sys.stderr, format=_progress_formatter, level="DEBUG"
+)
+"""
+logger_progress: Logger khusus untuk progress/debug satu baris.
+
+Contoh penggunaan:
+
+    from src.mlogger import logger_progress
+
+    logger_progress.bind(end="").debug("Progress: ")
+    for _ in range(5):
+        logger_progress.opt(raw=True).debug(".")
+    logger_progress.opt(raw=True).debug("\n")
+    logger_progress.info("Done")
+
+Output:
+    [12:34:56] Progress: .....
+    [12:34:56] Done
+"""
+
 logger = loguru_logger
 
 
