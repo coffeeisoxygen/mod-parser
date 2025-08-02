@@ -1,82 +1,97 @@
-from .mlogger import logger
+import os
+
+from dotenv import load_dotenv
+
+from src.mlogger import logger
 
 
-class QuotaETL:
-    # ======= Konfigurasi filter dan keyword =======
-    REPLACE_KEYWORDS = ["VIDEO", "VAS", "FITA"]
-    REMOVE_KEYWORDS = [
-        "DATA NATIONAL/",
-        "LOCAL DATA/",
-        "DATA DPI/",
-        "DATA VIDEO/",  # tambahan dari sample
-    ]  # keyword yang akan dihapus dari quota (case insensitive)
-    DROP_PRODUCTNAME_PREFIX = ["nonton hemat", "trend micro", "ProtekSi"]
+# ================== ENV PARSER UTILS ==================
+def parse_env_list(
+    key: str, default: str, upper: bool = False, lower: bool = False
+) -> list[str]:
+    """Parse comma-separated env variable to list, with optional upper/lower."""
+    load_dotenv()
+    val = os.getenv(key, default)
+    items = [k.strip() for k in val.split(",") if k.strip()]
+    if upper:
+        return [k.upper() for k in items]
+    if lower:
+        return [k.lower() for k in items]
+    return items
 
-    # ======= ETL Quota (cleaning & normalization) =======
-    @classmethod
-    def clean_quota(cls, quota: str) -> str:
-        """Bersihkan dan normalisasi field quota dengan urutan:
 
-        1. Uppercase untuk normalisasi
-        2. Remove redundant keyword
-        3. Replace keyword
-        5. Cleanup spasi/koma
-        6. Return hasil
-        """
+# ================== ETL CLASS ==================
+
+
+# ================== ETL & FORMATTER CLASS ==================
+class PaketETL:
+    """ETL dan formatter untuk response paket, siap DI dan testable."""
+
+    def __init__(self):
+        self.replace_quota_keywords = parse_env_list(
+            "REPLACE_KEYWORDS", "VIDEO,VAS,FITA", upper=True
+        )
+        self.remove_quota_keywords = parse_env_list(
+            "REMOVE_KEYWORDS",
+            "DATA NATIONAL/,LOCAL DATA/,DATA DPI/,DATA VIDEO/",
+            upper=True,
+        )
+        self.DROP_PRODUCTNAME_PREFIX = parse_env_list(
+            "DROP_PRODUCTNAME_PREFIX", "nonton hemat,trend micro,ProtekSi", lower=True
+        )
+
+    # --- Step 1: Filter paket by productName prefix ---
+    def filter_paket(self, paket_list: list[dict]) -> list[dict]:
+        """Filter paket yang productName-nya diawali prefix drop."""
+        result = []
+        for paket in paket_list:
+            pname = str(paket.get("productName", "")).strip().lower()
+            if any(pname.startswith(prefix) for prefix in self.DROP_PRODUCTNAME_PREFIX):
+                continue
+            result.append(paket)
+        return result
+
+    # --- Step 2: Remove redundant keyword in quota ---
+    def remove_keywords(self, quota: str) -> str:
+        cleaned = quota.strip().upper()
+        for rem in self.remove_quota_keywords:
+            cleaned = cleaned.replace(rem, "")
+        return cleaned
+
+    # --- Step 3: Replace keyword in quota ---
+    def replace_keywords(self, cleaned: str) -> str | None:
+        for keyword in self.replace_quota_keywords:
+            if keyword in cleaned:
+                return f"Bonus {keyword.lower()}"
+        return None
+
+    # --- Step 4: Cleanup and normalize quota part ---
+    def cleanup_quota_part(self, cleaned: str) -> str:
+        return " ".join(word.capitalize() for word in cleaned.strip().split())
+
+    # --- Step 5: Clean and normalize full quota field ---
+    def clean_quota(self, quota: str) -> str:
         parts = []
         for p in quota.split(","):
-            # Step 1: Uppercase dan strip untuk normalisasi
-            cleaned = p.strip().upper()
-
-            # Step 2: Remove redundant keywords (case insensitive)
-            for rem in cls.REMOVE_KEYWORDS:
-                cleaned = cleaned.replace(rem.upper(), "")
-
-            # Step 3: Replace keyword (jika ditemukan REPLACE_KEYWORDS)
-            found_keyword = None
-            for keyword in cls.REPLACE_KEYWORDS:
-                if keyword in cleaned:
-                    found_keyword = keyword
-                    break
-
-            if found_keyword:
-                # Ganti dengan 'Bonus {keyword}' (user-friendly lowercase)
-                parts.append(f"Bonus {found_keyword.lower()}")
+            cleaned = self.remove_keywords(p)
+            replaced = self.replace_keywords(cleaned)
+            if replaced:
+                parts.append(replaced)
             else:
-                # Step 5: Cleanup per part dan kembalikan ke case normal
                 cleaned_result = cleaned.strip()
-                if cleaned_result:  # hanya tambah jika tidak kosong
-                    # Normalize case: capitalize first letter of each word
-                    parts.append(
-                        " ".join(word.capitalize() for word in cleaned_result.split())
-                    )
-
-        # Step 5: Final cleanup - join dan hilangkan spasi ganda
-        # Step 6: Return hasil akhir
+                if cleaned_result:
+                    parts.append(self.cleanup_quota_part(cleaned_result))
         result = ", ".join(parts).strip()
         return " ".join(result.split()) if result else ""
 
-    # ======= ETL Paket List =======
-    @classmethod
-    def clean_paket_list(cls, paket_list: list[dict]) -> list[dict]:
-        """Bersihkan dan filter list paket sesuai urutan ETL:
-        1. Filter productName prefix
-        2-3. Bersihkan quota (remove & replace keywords)
-        4. Format akan dilakukan di format_paket_output
-        """
+    # --- Step 6: Clean all paket (filter, clean quota, keep fields) ---
+    def clean_paket_list(self, paket_list: list[dict]) -> list[dict]:
+        filtered = self.filter_paket(paket_list)
         cleaned = []
-        for paket in paket_list:
-            # Step 1: Filter productName prefix (skip paket yang tidak diinginkan)
-            pname = str(paket.get("productName", "")).strip().lower()
-            if any(pname.startswith(prefix) for prefix in cls.DROP_PRODUCTNAME_PREFIX):
-                continue
-
-            # Step 2-3: ETL quota (remove redundant & replace keywords)
+        for paket in filtered:
             p = paket.copy()
             if "quota" in p and isinstance(p["quota"], str):
-                p["quota"] = cls.clean_quota(p["quota"])
-
-            # Ambil field penting dan strip semua (persiapan untuk Step 4: Format output)
+                p["quota"] = self.clean_quota(p["quota"])
             short = {
                 k: str(p[k]).strip().rstrip(",") if k in p else ""
                 for k in ("productId", "productName", "quota", "total_")
@@ -84,59 +99,38 @@ class QuotaETL:
             cleaned.append(short)
         return cleaned
 
+    # --- Step 7: Format output string ---
+    def format_response(
+        self,
+        response_json: dict,
+        trxid: str,
+        tujuan: str,
+    ) -> str:
+        """Format response list_paket menjadi string siap kirim.
 
-def transform_list_paket_response(
-    response_json: dict, trxid: str, tujuan: str, kolom: list[str] | None = None
-) -> str:
-    """Transformasi response list_paket menjadi format string dengan ETL.
-
-    Menerapkan ETL (Extract, Transform, Load) pada data paket sebelum format output:
-    1. Filter paket berdasarkan productName prefix
-    2. Bersihkan dan transformasi quota (remove redundant, replace keywords)
-    3. Format output: trxid=[trxid]&to=[tujuan]&message=list paket = #productId#productName#total_ ...
-
-    Args:
-        response_json: Raw response JSON dari API
-        trxid: Transaction ID
-        tujuan: Nomor tujuan
-        kolom: List kolom yang ingin ditampilkan, default ['productId', 'productName', 'total_']
-    """
-    with logger.contextualize(trxid=trxid, tujuan=tujuan):
-        logger.debug(f"Raw response before transform: {response_json}")
-
-    # ETL: Extract, Transform, Load
-    paket_list = response_json.get("paket", [])
-    cleaned_paket_list = QuotaETL.clean_paket_list(paket_list)
-
-    message_parts = []
-    if not kolom:
-        kolom = ["productId", "productName", "total_"]
-    # Pastikan productId selalu di depan
-    if "productId" not in kolom:
-        kolom = ["productId", *kolom]
-
-    for paket in cleaned_paket_list:
-        product_id = str(paket.get("productId", ""))
-        # Ambil kolom lain selain productId
-        other_values = [str(paket.get(k, "")) for k in kolom if k != "productId"]
-        # Format: -productId#kolom1#kolom2-
-        part = f"-{product_id}"
-        if other_values:
-            part += "#" + "#".join(other_values)
-        part += "-"
-        message_parts.append(part)
-
-    # Gabungkan tanpa spasi antar paket, dan pastikan tidak ada double --
-    message = "list paket = " + "".join(message_parts)
-    # Hilangkan double dash jika ada (misal: -...--...-)
-    while "--" in message:
-        message = message.replace("--", "-")
-
-    result = f"trxid={trxid}&to={tujuan}&message={message}"
-
-    with logger.contextualize(trxid=trxid, tujuan=tujuan):
-        logger.info(
-            f"ETL transformation completed. Original pakets: {len(paket_list)}, After ETL: {len(cleaned_paket_list)}"
-        )
-
-    return result
+        Output: #productid#productname|quota#Rptotal_#...
+        """
+        with logger.contextualize(trxid=trxid, tujuan=tujuan):
+            logger.debug(f"Raw response before transform: {response_json}")
+        paket_list = response_json.get("paket", [])
+        cleaned_paket_list = self.clean_paket_list(paket_list)
+        message_parts = []
+        for paket in cleaned_paket_list:
+            # Step 1: productId jadi id:productid
+            pid = f"id:{paket['productId']}" if paket.get("productId") else "id:-"
+            # Step 2: productName dan quota digabung dengan pipe
+            pname = paket.get("productName", "")
+            quota = paket.get("quota", "")
+            name_quota = f"{pname}-{quota}"
+            # Step 3: total_ tanpa Rp
+            total = paket.get("total_", "")
+            # Gabung sesuai format baru
+            part = f"{pid}#{name_quota}#{total}"
+            message_parts.append(part)
+        message = "".join(message_parts)
+        result = f"trxid={trxid}&to={tujuan}&status=success&message={message}"
+        with logger.contextualize(trxid=trxid, tujuan=tujuan):
+            logger.info(
+                f"ETL transformation completed. Original pakets: {len(paket_list)}, After ETL: {len(cleaned_paket_list)}"
+            )
+        return result

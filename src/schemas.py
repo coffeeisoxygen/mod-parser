@@ -25,9 +25,23 @@ class TrimRequest(BaseModel):
 
     kolom: str | None = Field(
         None,
-        description="Kolom yang ingin ditampilkan (optional, default: semua kolom)",
-        examples=["productId,productName"],
+        description="Kolom yang ingin ditampilkan (wajib: productId,productName,quota,total_ saja, urutan bebas)",
+        examples=["productId,productName,quota,total_"],
     )
+
+    @field_validator("kolom")
+    @classmethod
+    def validate_kolom(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        allowed = {"productid", "productname", "quota", "total_"}
+        # Split, strip, dan lower
+        kolom_set = {k.strip().lower() for k in v.split(",") if k.strip()}
+        if kolom_set != allowed:
+            raise ValueError(
+                "Field 'kolom' hanya boleh berisi kombinasi productId, productName, quota, total_ (urutan bebas, tidak boleh ada kolom lain)"
+            )
+        return v
 
     @field_validator("to")
     @classmethod
