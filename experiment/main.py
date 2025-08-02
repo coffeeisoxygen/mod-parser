@@ -24,10 +24,12 @@ def formatter(record: dict[str, Any]) -> str:
 
 
 logger.remove()  # Remove default handler
-logger.add(sys.stderr, format=formatter, level="INFO", colorize=True, enqueue=True) # type: ignore
+logger.add(sys.stderr, format=formatter, level="INFO", colorize=True, enqueue=True)  # type: ignore
 
 
 def main() -> None:
+    import time
+
     with logger.contextualize():
         logger.info("=== Start ETL HVCDATA.json ===")
 
@@ -52,12 +54,16 @@ def main() -> None:
     input_count = len(paket_list)
     logger.info(f"Input: {input_count} produk, {input_char} char")
 
+    start_time = time.perf_counter()
+
     logger.bind(end="").info("Cleaning: ")
     cleaned = []
     for _i, row in enumerate(paket_list, 1):
         cleaned.append(etl.clean_paket_list([row])[0])
         logger.opt(raw=True).info(".")
     logger.opt(raw=True).info("\n")
+
+    elapsed = time.perf_counter() - start_time
 
     # Info output
     output_char = len(etl.format_response(cleaned))
@@ -67,7 +73,9 @@ def main() -> None:
     logger.info("Output satu baris:")
     logger.info(etl.format_response(cleaned))
 
-    logger.info("[Load and clean HVCDATA.json] Done.")
+    logger.info(
+        f"[Load and clean HVCDATA.json] Done. Waktu eksekusi: {elapsed:.4f} detik"
+    )
 
 
 if __name__ == "__main__":
