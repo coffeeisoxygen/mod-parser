@@ -20,8 +20,8 @@ def test_module_config_fields():
         assert isinstance(mod_cfg.timeout, int)
         assert isinstance(mod_cfg.max_retries, int)
         assert isinstance(mod_cfg.seconds_between_retries, int)
-        assert isinstance(mod_cfg.regexs_replacement, list)
-        assert isinstance(mod_cfg.excluded_product_prefixes, list)
+        assert isinstance(mod_cfg.list_regex_replacement, (list, type(None)))
+        assert isinstance(mod_cfg.list_prefixes, (list, type(None)))
 
 
 def test_specific_module_values():
@@ -32,7 +32,7 @@ def test_specific_module_values():
         assert digipos.name == "digipos"
         assert digipos.base_url.startswith("http")
         assert digipos.method in {"GET", "POST"}
-        assert isinstance(digipos.regexs_replacement, list)
+        assert isinstance(digipos.list_regex_replacement, (list, type(None)))
 
 
 def test_empty_modules(monkeypatch):
@@ -78,8 +78,8 @@ def test_module_empty_lists(monkeypatch):
         timeout = 1
         max_retries = 0
         seconds_between_retries = 0
-        regexs_replacement = []
-        excluded_product_prefixes = []
+        list_regex_replacement = []
+        list_prefixes = []
 
     class DummySettings:
         modules = {"emptylist": DummyModule()}
@@ -89,8 +89,8 @@ def test_module_empty_lists(monkeypatch):
 
     settings = get_settings()
     mod = settings.modules["emptylist"]
-    assert mod.regexs_replacement == []
-    assert mod.excluded_product_prefixes == []
+    assert mod.list_regex_replacement == []
+    assert mod.list_prefixes == []
 
 
 def test_module_negative_timeout(monkeypatch):
@@ -103,8 +103,8 @@ def test_module_negative_timeout(monkeypatch):
         timeout = -5
         max_retries = -1
         seconds_between_retries = -2
-        regexs_replacement = ["abc"]
-        excluded_product_prefixes = []
+        list_regex_replacement = ["abc"]
+        list_prefixes = []
 
     class DummySettings:
         modules = {"neg": DummyModule()}
@@ -129,8 +129,8 @@ def test_module_extra_fields(monkeypatch):
         timeout = 1
         max_retries = 1
         seconds_between_retries = 1
-        regexs_replacement = []
-        excluded_product_prefixes = []
+        list_regex_replacement = []
+        list_prefixes = []
         extra_field = "should be ignored"
 
     class DummySettings:
@@ -142,4 +142,4 @@ def test_module_extra_fields(monkeypatch):
     settings = get_settings()
     mod = settings.modules["extra"]
     assert hasattr(mod, "extra_field")
-    assert mod.extra_field == "should be ignored" # type: ignore
+    assert mod.extra_field == "should be ignored"  # type: ignore

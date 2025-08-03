@@ -4,24 +4,19 @@ from src.interfaces.ireq_response import IResponseProcessor
 
 
 class ResponseProcessor(IResponseProcessor):
-    """Processes response data for paket lists, including filtering by prefix, cleaning, simplifying quota descriptions, and formatting final response."""
+    """Processes response data for paket lists, with config-driven filtering and quota simplification."""
 
     def __init__(
         self,
-        excluded_product_prefixes: str = "",
-        regex_days: str = r"\b(DAYS?|HARI)\b",
-        regex_gb: str = r"(\d+)\s*GB",
-        regex_d: str = r"(\d+)\s*D",
-        regex_internet: str = r"\bINTERNET\b",
+        exclude_product: bool = False,
+        list_prefixes: list[str] | None = None,
+        replace_with_regex: bool = False,
+        list_regex_replacement: list[str] | None = None,
     ):
-        """Initialize the processor with optional comma-separated prefix filter and regex patterns."""
-        self.prefixes = [
-            p.strip().upper() for p in excluded_product_prefixes.split(",") if p.strip()
-        ]
-        self.regex_days = regex_days
-        self.regex_gb = regex_gb
-        self.regex_d = regex_d
-        self.regex_internet = regex_internet
+        self.exclude_product = exclude_product
+        self.prefixes = [p.strip().upper() for p in (list_prefixes or [])]
+        self.replace_with_regex = replace_with_regex
+        self.regexs_replacement = list_regex_replacement or []
 
     def clean_quota_parts(self, quota: str) -> str:
         """Cleans quota string by removing text before '/' and extra spaces."""
@@ -34,40 +29,28 @@ class ResponseProcessor(IResponseProcessor):
         return ", ".join(p for p in parts if p)
 
     def simplify_quota_words(self, quota: str) -> str:
-        """Simplifies quota string by replacing certain words and formatting."""
+        """Simplifies quota string by applying regex replacements if enabled."""
         if not quota or not str(quota).strip():
             return ""
-        quota = re.sub(self.regex_days, "D", quota, flags=re.IGNORECASE)
-        quota = re.sub(self.regex_gb, r"\1GB", quota, flags=re.IGNORECASE)
-        quota = re.sub(self.regex_d, r"\1D", quota, flags=re.IGNORECASE)
-        quota = re.sub(self.regex_internet, "Net", quota, flags=re.IGNORECASE)
+        if self.replace_with_regex and self.regexs_replacement:
+            for regex in self.regexs_replacement:
+                quota = re.sub(regex, "", quota, flags=re.IGNORECASE)
         quota = re.sub(r"\s+", " ", quota).strip()
         return quota
 
     def process(self, paket_list: list[dict]) -> list[dict]:
-        """Processes a list of paket dictionaries by filtering, cleaning, and simplifying quota fields.
-
-        This method applies the following transformations to each paket dictionary:
-        - Filters out paket entries based on the specified prefix.
-        - Cleans and simplifies the quota description.
-
-        Args:
-            paket_list (list[dict]): List of paket dictionaries to process.
-
-        Returns:
-            list[dict]: List of processed paket dictionaries.
-        """
+        """Processes a list of paket dictionaries by filtering and cleaning based on config flags."""
         result = []
         for paket in paket_list:
             processed = {
                 k: v.upper() if isinstance(v, str) else v for k, v in paket.items()
             }
-            if any(
-                str(processed.get("productName", "")).startswith(prefix)
-                for prefix in self.prefixes
-            ):
-                continue
-
+            if self.exclude_product and self.prefixes:
+                if any(
+                    str(processed.get("productName", "")).startswith(prefix)
+                    for prefix in self.prefixes
+                ):
+                    continue
             raw_quota = str(processed.get("quota", ""))
             cleaned = self.clean_quota_parts(raw_quota)
             simplified = self.simplify_quota_words(cleaned)

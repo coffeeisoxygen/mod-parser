@@ -5,8 +5,10 @@ method = "GET"
 timeout = 10
 max_retries = 3
 seconds_between_retries = 3
-regexs_replacement = ["\\b(DAYS?|HARI)\\b", "(\\d+)\\s*GB", "(\\d+)\\s*D", "\\bINTERNET\\b"]
-excluded_product_prefixes = []
+replace_with_regex = true
+list_regex_replacement = ["\\b(DAYS?|HARI)\\b", "(\\d+)\\s*GB", "(\\d+)\\s*D", "\\bINTERNET\\b"]
+exclude_product = true
+list_prefixes = ["Facebook"]
 
 [modules.tsel]
 name = "tsel"
@@ -15,5 +17,7 @@ method = "POST"
 timeout = 8
 max_retries = 2
 seconds_between_retries = 2
-regexs_replacement = ["\\b(HARI)\\b", "(\\d+)\\s*MB"]
-excluded_product_prefixes = []
+replace_with_regex = false
+list_regex_replacement = []
+exclude_product = false
+list_prefixes = []

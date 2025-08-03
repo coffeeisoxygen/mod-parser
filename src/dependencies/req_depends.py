@@ -1,19 +1,30 @@
 """dependencies for request forwarding and response processing."""
 
-from src.config.mod_settings import get_settings
+from fastapi import Depends
+from src.config.mod_settings import ModuleConfig
+from src.dependencies.modules import get_module_config
 from src.interfaces.ireq_forwarder import IRequestForwarder
 from src.interfaces.ireq_response import IResponseProcessor
 from src.services.req_forwarder import RequestForwarder
 from src.services.req_response import ResponseProcessor
 
-settings = get_settings()
+
+def get_request_forwarder(
+    module_cfg: ModuleConfig = Depends(get_module_config),
+) -> IRequestForwarder:
+    """Dependency provider for IRequestForwarder, dynamic per module."""
+    return RequestForwarder(target_base_url=module_cfg.base_url)
 
 
-def get_request_forwarder() -> IRequestForwarder:
-    """Dependency provider for IRequestForwarder."""
-    return RequestForwarder(target_base_url=settings.modules.base_url)
-
-
-def get_response_processor(prefix_filter: str = "") -> IResponseProcessor:
-    """Dependency provider for IResponseProcessor with optional prefix filter."""
-    return ResponseProcessor(excluded_product_prefixes=prefix_filter)
+def get_response_processor(
+    module_cfg: ModuleConfig = Depends(get_module_config),
+) -> IResponseProcessor:
+    """Dependency provider for IResponseProcessor, dynamic per module."""
+    # Default values (jika ingin fallback)
+    default_regexs = [r"\b(DAYS?|HARI)\b", r"(\d+)\s*GB", r"(\d+)\s*D", r"\bINTERNET\b"]
+    return ResponseProcessor(
+        exclude_product=module_cfg.exclude_product,
+        list_prefixes=module_cfg.list_prefixes or [],
+        replace_with_regex=module_cfg.replace_with_regex,
+        list_regex_replacement=module_cfg.list_regex_replacement or default_regexs,
+    )

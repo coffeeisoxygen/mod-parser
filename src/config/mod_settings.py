@@ -1,6 +1,8 @@
 """ini setup logika bussines ya , bukan untuk application level config."""
 
 # ruff: noqa ARG003
+from dataclasses import Field
+from email.policy import default
 from pydantic import BaseModel
 from pydantic_settings import (
     BaseSettings,
@@ -13,12 +15,14 @@ from pydantic_settings import (
 class ModuleConfig(BaseModel):
     name: str
     base_url: str
-    method: str
+    method: str = ("GET")
     timeout: int
     max_retries: int
     seconds_between_retries: int
-    regexs_replacement: list[str]
-    excluded_product_prefixes: list[str]
+    replace_with_regex: bool
+    list_regex_replacement: list[str] | None = None
+    exclude_product: bool
+    list_prefixes: list[str] | None = None
 
 
 class ModuleSettings(BaseSettings):
