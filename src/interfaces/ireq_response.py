@@ -11,3 +11,9 @@ class IResponseProcessor(ABC):
         self, result: list[dict], trxid: str, to: str, category: str
     ) -> str:
         pass
+
+    # Tambahin ini
+    @abstractmethod
+    def get_stats(self) -> dict:
+        """Return info seperti total char dan produk sebelum/sesudah proses."""
+        pass

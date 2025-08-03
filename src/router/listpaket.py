@@ -17,7 +17,7 @@ async def parse_list_paket(
     req: ListParseRequest = Depends(ListParseRequest),
     forwarder: IRequestForwarder = Depends(get_request_forwarder),
     processor: IResponseProcessor = Depends(get_response_processor),
-) -> str:
+) -> PlainTextResponse:
     """Parse and process a list of paket from a forwarded request.
 
     Parameters
@@ -46,7 +46,6 @@ async def parse_list_paket(
         if logger:
             logger.info(f"[listpaket] Forwarded to {req.end}, response: {resp}")
 
-        # Ambil list paket dari response (langsung dari resp['paket'] jika ada)
         raw_data = resp["paket"] if isinstance(resp, dict) and "paket" in resp else []
 
         processed = processor.process(raw_data)
@@ -59,11 +58,14 @@ async def parse_list_paket(
             to=req.to,
             category=query_dict.get("category", "paket"),
         )
+        stats = processor.get_stats()
         if logger:
             logger.info(f"[listpaket] Final message: {message}")
+        return PlainTextResponse(
+            content=f"{message}\n\n[INFO] char_before={stats['char_before']}, char_after={stats['char_after']}, product_before={stats['product_before']}, product_after={stats['product_after']}"
+        )
     except Exception as exc:
         log_error(exc, "[listpaket] ERROR: Unhandled exception")
         traceback.print_exc()
         raise
-    else:
-        return message
+

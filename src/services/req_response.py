@@ -19,6 +19,7 @@ class ResponseProcessor(IResponseProcessor):
         self.replace_with_regex = replace_with_regex
         self.regexs_replacement = list_regex_replacement or []
         self.logger = logger.bind(class_name="ResponseProcessor")
+        self._stats = {}  # Tambahkan internal state untuk statistik
 
     def clean_quota_parts(self, quota: str) -> str:
         """Cleans quota string by removing text before '/' and extra spaces."""
@@ -43,7 +44,6 @@ class ResponseProcessor(IResponseProcessor):
     def process(self, paket_list: list[dict]) -> list[dict]:
         """Processes a list of paket dictionaries by filtering and cleaning based on config flags."""
         self.logger.info("Processing paket_list", paket_list=paket_list)
-        # Log total char and product before processing
         before_total_product = len(paket_list)
         before_total_char = sum(len(str(p)) for p in paket_list)
         self.logger.info(
@@ -70,7 +70,6 @@ class ResponseProcessor(IResponseProcessor):
             simplified = self.simplify_quota_words(cleaned)
             processed["quota"] = simplified
             result.append(processed)
-        # Log total char and product after processing
         after_total_product = len(result)
         after_total_char = sum(len(str(p)) for p in result)
         self.logger.info(
@@ -79,6 +78,13 @@ class ResponseProcessor(IResponseProcessor):
             total_product_after=after_total_product,
         )
         self.logger.info("Processed result", result=result)
+        # Simpan statistik ke internal state
+        self._stats = {
+            "char_before": before_total_char,
+            "char_after": after_total_char,
+            "product_before": before_total_product,
+            "product_after": after_total_product,
+        }
         return result
 
     def to_response_string(
@@ -113,3 +119,7 @@ class ResponseProcessor(IResponseProcessor):
         response_str = f"trxid={trxid}&to={to}&status=success&message=listpaket in {category} : {final}"
         self.logger.info("Response string created", response=response_str)
         return response_str
+
+    def get_stats(self) -> dict:
+        """Return info seperti total char dan produk sebelum/sesudah proses."""
+        return self._stats
