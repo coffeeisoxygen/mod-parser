@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from ..mlogger import logger
+from src.mlogger import logger
 
 
 @asynccontextmanager

@@ -11,6 +11,7 @@ from src.config.app_middleware import (
     setup_logger_binding,
 )
 from src.config.app_router import register_routers
+from src.dependencies.modules import get_settings
 from src.mlogger import LogConfig, LoggerManager, logger, parse_log_level
 
 load_dotenv()
@@ -24,7 +25,7 @@ log_config = LogConfig(
 )
 LoggerManager(log_config).setup()
 logger.debug("Logger initialized with config", log_config=log_config)
-
+settings = get_settings()
 app = FastAPI(
     title="API Parser",
     description="Parser API untuk forward requests",

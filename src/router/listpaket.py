@@ -1,5 +1,6 @@
+import traceback
+
 from fastapi import APIRouter, Depends, Request
-from src.config.mod_settings import ModuleConfig
 from src.dependencies.modules import get_module_config
 from src.dependencies.req_depends import get_request_forwarder, get_response_processor
 from src.interfaces.ireq_forwarder import IRequestForwarder
@@ -14,13 +15,13 @@ router = APIRouter()
 async def parse_list_paket(
     request: Request,
     req: ListParseRequest = Depends(),
-    module_cfg: ModuleConfig = Depends(get_module_config),
     forwarder: IRequestForwarder = Depends(get_request_forwarder),
     processor: IResponseProcessor = Depends(get_response_processor),
 ) -> ListParseResponse:
+    module_cfg = get_module_config(req.mod)
     logger = getattr(request.state, "logger", None)
     try:
-        query_dict = req.model_dump(exclude={"mod"})
+        query_dict = dict(request.query_params)
         if logger:
             logger.info(f"[listpaket] Incoming request: {query_dict}")
 
@@ -48,4 +49,5 @@ async def parse_list_paket(
 
     except Exception as exc:
         log_error(exc, "[listpaket] ERROR: Unhandled exception")
+        traceback.print_exc()  # <-- Add this line to print the full traceback
         raise
