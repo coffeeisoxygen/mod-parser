@@ -189,8 +189,8 @@ def main():
 
     # Proses terakhir: format output menjadi 1 baris string
     output_str = format_output(simplified_quota)
-    print("\n=== OUTPUT AKHIR (1 baris, 1000 char pertama) ===")
-    print(output_str[:1000] + ("..." if len(output_str) > 1000 else ""))
+    print("\n=== OUTPUT AKHIR (1 baris, 2000 char pertama) ===")
+    print(output_str[:2000] + ("..." if len(output_str) > 2000 else ""))
 
 
 if __name__ == "__main__":
