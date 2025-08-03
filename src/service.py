@@ -4,13 +4,13 @@ from urllib.parse import urlencode
 import httpx
 from dotenv import load_dotenv
 
-from .mlogger import logger
-from .schemas import TrimRequest
+from src.mlogger import logger
+from src.schemas import ParserRequest
 
 load_dotenv()  # Memuat variabel lingkungan dari .env jika ada
 
 
-def build_query(trim_request: TrimRequest) -> str:
+def build_query(trim_request: ParserRequest) -> str:
     """Build ulang query string dari TrimRequest.
 
     Akan mengubah seluruh field (termasuk extra) menjadi query string.
@@ -25,7 +25,7 @@ def build_query(trim_request: TrimRequest) -> str:
     return urlencode(params)
 
 
-def get_kolom_list(trim_request: TrimRequest) -> list[str] | None:
+def get_kolom_list(trim_request: ParserRequest) -> list[str] | None:
     """Ambil kolom sebagai list dari TrimRequest jika ada."""
     with logger.contextualize(
         trxid=getattr(trim_request, "trxid", None),
@@ -39,7 +39,7 @@ def get_kolom_list(trim_request: TrimRequest) -> list[str] | None:
         return None
 
 
-async def forward_request(trim_request: TrimRequest) -> httpx.Response:
+async def forward_request(trim_request: ParserRequest) -> httpx.Response:
     """Ambil baseurl dari .env, build query, dan forward ke endpoint target secara async.
 
     Return: httpx.Response

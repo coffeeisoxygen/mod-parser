@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 from src.mlogger import LoggerManager, logger
 from src.parser_response import PaketETL
-from src.schemas import TrimRequest
+from src.schemas import ParserRequest
 from src.service import forward_request
 
 router = APIRouter()
@@ -25,7 +25,7 @@ async def parser_endpoint(
     params = dict(request.query_params)
     with LoggerManager.LogContext(f"parser_chain:{params.get('end', 'unknown')}"):
         try:
-            trim_request = TrimRequest(**params)
+            trim_request = ParserRequest(**params)
         except Exception as exc:
             logger.exception("Failed to build TrimRequest from query params")
             raise HTTPException(status_code=422, detail=str(exc)) from exc
