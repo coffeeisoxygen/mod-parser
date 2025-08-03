@@ -66,4 +66,4 @@ async def parse_list_paket(
         traceback.print_exc()
         raise
     else:
-        return message  # return string, bukan ListParseResponse
+        return message
