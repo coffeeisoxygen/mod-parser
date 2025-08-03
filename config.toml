@@ -1,0 +1,19 @@
+[modules.digipos]
+name = "digipos"
+base_url = "http://10.0.0.3:10003"
+method = "GET"
+timeout = 10
+max_retries = 3
+seconds_between_retries = 3
+regexs_replacement = ["\\b(DAYS?|HARI)\\b", "(\\d+)\\s*GB", "(\\d+)\\s*D", "\\bINTERNET\\b"]
+excluded_product_prefixes = []
+
+[modules.tsel]
+name = "tsel"
+base_url = "http://10.0.0.4:10004"
+method = "POST"
+timeout = 8
+max_retries = 2
+seconds_between_retries = 2
+regexs_replacement = ["\\b(HARI)\\b", "(\\d+)\\s*MB"]
+excluded_product_prefixes = []

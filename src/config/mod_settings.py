@@ -1,13 +1,16 @@
-"""ini adalah setup terkait logika bussiness ya , bukan application config."""
+"""ini setup logika bussines ya , bukan untuk application level config."""
 
-from functools import lru_cache
-
+# ruff: noqa ARG003
 from pydantic import BaseModel
-from pydantic_settings import SettingsConfigDict
-from pydantic_settings_yaml import YamlBaseSettings
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+    TomlConfigSettingsSource,
+)
 
 
-class Modules(BaseModel):
+class ModuleConfig(BaseModel):
     name: str
     base_url: str
     method: str
@@ -18,21 +21,22 @@ class Modules(BaseModel):
     excluded_product_prefixes: list[str]
 
 
-class Settings(YamlBaseSettings):
-    modules: list[Modules]  # support multiple modules
-    model_config = SettingsConfigDict(yaml_file="./config.yaml")
+class ModuleSettings(BaseSettings):
+    modules: dict[str, ModuleConfig]
+    model_config = SettingsConfigDict(toml_file="config.toml")
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        return (TomlConfigSettingsSource(settings_cls),)
 
 
-@lru_cache
-def get_settings() -> Settings:
-    """Load settings from YAML with caching."""
-    return Settings()  # type: ignore
-
-
-def get_module_by_name(name: str) -> Modules:
-    """Ambil module config berdasarkan nama (case-insensitive)."""
-    settings = get_settings()
-    for mod in settings.modules:
-        if mod.name.lower() == name.lower():
-            return mod
-    raise ValueError(f"Module '{name}' not found")
+def get_settings() -> ModuleSettings:
+    """Get the module settings instance."""
+    return ModuleSettings()  # type: ignore
