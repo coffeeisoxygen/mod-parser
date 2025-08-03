@@ -14,7 +14,7 @@ router = APIRouter()
 @router.get("/listpaket", response_model=ListParseResponse)
 async def parse_list_paket(
     request: Request,
-    req: ListParseRequest = Depends(),
+    req: ListParseRequest = Depends(ListParseRequest),
     forwarder: IRequestForwarder = Depends(get_request_forwarder),
     processor: IResponseProcessor = Depends(get_response_processor),
 ) -> ListParseResponse:
