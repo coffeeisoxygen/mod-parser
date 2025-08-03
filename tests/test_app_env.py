@@ -9,6 +9,7 @@ def sample_yaml(tmp_path):
     config = {
         "modules": {
             "name": "mod1",
+            "base_url": "http://test-url",  # Added base_url
             "method": "GET",
             "timeout": 10,
             "max_retries": 3,
@@ -27,29 +28,30 @@ def sample_yaml(tmp_path):
 def test_modules_model_valid():
     m = Modules(
         name="mod1",
+        base_url="http://test-url",  # Added base_url
         method="POST",
         timeout=5,
         max_retries=2,
         seconds_between_retries=1,
         regexs_replacement=["a", "b"],
         excluded_product_prefixes=["x"],
-        url={"prod": "http://prod"},
+        # url field is not in Modules anymore
     )
     assert m.name == "mod1"
-    assert m.url["prod"] == "http://prod"
+    assert m.base_url == "http://test-url"
 
 
 def test_modules_model_invalid():
     with pytest.raises(ValidationError):
         Modules(
             name="mod1",
+            base_url="http://test-url",  # Added base_url
             method="POST",
             timeout="not-an-int",  # invalid type # type: ignore
             max_retries=2,
             seconds_between_retries=1,
             regexs_replacement=["a", "b"],
             excluded_product_prefixes=["x"],
-            url={"prod": "http://prod"},
         )
 
 
@@ -64,7 +66,7 @@ def test_settings_loads_yaml(sample_yaml, monkeypatch):
     )
     s = Settings()  # type: ignore
     assert s.modules.name == config["modules"]["name"]
-    assert s.modules.url == config["modules"]["url"]
+    assert s.modules.base_url == config["modules"]["base_url"]
 
 
 def test_get_settings_cached(monkeypatch, sample_yaml):
@@ -80,3 +82,4 @@ def test_get_settings_cached(monkeypatch, sample_yaml):
     s2 = get_settings()
     assert s1 is s2
     assert s1.modules.name == config["modules"]["name"]
+    assert s1.modules.base_url == config["modules"]["base_url"]
