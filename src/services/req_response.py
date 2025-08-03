@@ -43,22 +43,41 @@ class ResponseProcessor(IResponseProcessor):
     def process(self, paket_list: list[dict]) -> list[dict]:
         """Processes a list of paket dictionaries by filtering and cleaning based on config flags."""
         self.logger.info("Processing paket_list", paket_list=paket_list)
+        # Log total char and product before processing
+        before_total_product = len(paket_list)
+        before_total_char = sum(len(str(p)) for p in paket_list)
+        self.logger.info(
+            "Before processing",
+            total_char_before=before_total_char,
+            total_product_before=before_total_product,
+        )
         result = []
         for paket in paket_list:
             processed = {
                 k: v.upper() if isinstance(v, str) else v for k, v in paket.items()
             }
-            if self.exclude_product and self.prefixes:
-                if any(
+            if (
+                self.exclude_product
+                and self.prefixes
+                and any(
                     str(processed.get("productName", "")).startswith(prefix)
                     for prefix in self.prefixes
-                ):
-                    continue
+                )
+            ):
+                continue
             raw_quota = str(processed.get("quota", ""))
             cleaned = self.clean_quota_parts(raw_quota)
             simplified = self.simplify_quota_words(cleaned)
             processed["quota"] = simplified
             result.append(processed)
+        # Log total char and product after processing
+        after_total_product = len(result)
+        after_total_char = sum(len(str(p)) for p in result)
+        self.logger.info(
+            "After processing",
+            total_char_after=after_total_char,
+            total_product_after=after_total_product,
+        )
         self.logger.info("Processed result", result=result)
         return result
 
