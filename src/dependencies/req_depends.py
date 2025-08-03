@@ -25,11 +25,11 @@ def get_response_processor(
     # Default values (jika ingin fallback)
     default_regexs = [r"\b(DAYS?|HARI)\b", r"(\d+)\s*GB", r"(\d+)\s*D", r"\bINTERNET\b"]
     logger.info(
-        "Creating ResponseProcessor with exclude_product=%s, list_prefixes=%s, replace_with_regex=%s, list_regex_replacement=%s",
-        module_cfg.exclude_product,
-        module_cfg.list_prefixes,
-        module_cfg.replace_with_regex,
-        module_cfg.list_regex_replacement or default_regexs,
+        "Creating ResponseProcessor with exclude_product={exclude_product}, list_prefixes={list_prefixes}, replace_with_regex={replace_with_regex}, list_regex_replacement={list_regex_replacement}",
+        exclude_product=module_cfg.exclude_product,
+        list_prefixes=module_cfg.list_prefixes,
+        replace_with_regex=module_cfg.replace_with_regex,
+        list_regex_replacement=module_cfg.list_regex_replacement or default_regexs,
     )
     return ResponseProcessor(
         exclude_product=module_cfg.exclude_product,

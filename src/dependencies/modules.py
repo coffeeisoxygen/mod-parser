@@ -11,5 +11,5 @@ def get_module_config(mod: str) -> ModuleConfig:
     if mod not in settings.modules:
         logger.error(f"Unknown module requested: '{mod}'")
         raise HTTPException(status_code=400, detail="Unknown module")
-    logger.debug(f"Module config loaded for '{mod}' and value: {settings.modules[mod]}")
+    logger.info(f"Module config loaded for '{mod}' and value: {settings.modules[mod]}")
     return settings.modules[mod]
