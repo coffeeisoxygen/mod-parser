@@ -16,3 +16,7 @@ class RequestForwarder(IRequestForwarder):
             response = await client.get(url, params=query_params)
             response.raise_for_status()
             return response.json()
+
+    # Optionally, implement forward_get as an alias for forward
+    async def forward_get(self, endpoint: str, query_params: dict) -> dict:
+        return await self.forward(endpoint, query_params)

@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 ALLOWED_COLUMNS = {"productid", "productname", "quota", "total_"}
 
 
-class ParserRequest(BaseModel):
+class ListParseRequest(BaseModel):
     model_config = ConfigDict(extra="allow", str_strip_whitespace=True)
 
     mod: str = Field(..., description="Nama modul target (misal digipos)")
@@ -38,7 +38,7 @@ class ParserRequest(BaseModel):
         return v
 
 
-class ParserResponse(BaseModel):
+class ListParseResponse(BaseModel):
     model_config = ConfigDict(extra="allow", str_strip_whitespace=True)
 
     message: str = Field(..., description="Response akhir dalam format string")
