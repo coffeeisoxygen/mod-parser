@@ -1,7 +1,5 @@
-import json
 import os
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 
 
 class ConcurrentPaketETL:
@@ -100,23 +98,12 @@ class ConcurrentPaketETL:
         return "".join(result)
 
 
-# === TEST ===
-if __name__ == "__main__":
-    import time
-
+# --- Refactor: Tambahkan fungsi run_etl untuk profiling terpusat ---
+def run_etl(data, workers=None, sort_by_name=True):
+    """Jalankan ConcurrentPaketETL v3 pada data dict (list paket).
+    Return: (result_list, response_str)
+    """
     etl = ConcurrentPaketETL()
-    data = json.loads(Path("experiment/HVCDATA.json").read_text(encoding="utf-8"))
-    print("INFO    : [Load and clean HVCDATA.json] Starting...")
-    print(f"INFO    : Input: {len(data['paket'])} produk")
-
-    start = time.perf_counter()
-    result = etl.clean_concurrent(data["paket"])
-    response = etl.format_response(result)
-    end = time.perf_counter()
-
-    print(f"INFO    : Output: {len(result)} produk, {len(response)} char")
-    print("INFO    : Output satu baris:")
-    print(f"INFO    : {response[:200]}...")
-    print(
-        f"INFO    : [Load and clean HVCDATA.json] Done. Waktu eksekusi: {end - start:.4f} detik"
-    )
+    result = etl.clean_concurrent(data, workers=workers)
+    response = etl.format_response(result, sort_by_name=sort_by_name)
+    return result, response
