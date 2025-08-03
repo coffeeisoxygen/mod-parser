@@ -2,7 +2,6 @@ import traceback
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import PlainTextResponse
-from src.dependencies.modules import get_module_config
 from src.dependencies.req_depends import get_request_forwarder, get_response_processor
 from src.interfaces.ireq_forwarder import IRequestForwarder
 from src.interfaces.ireq_response import IResponseProcessor
@@ -19,7 +18,24 @@ async def parse_list_paket(
     forwarder: IRequestForwarder = Depends(get_request_forwarder),
     processor: IResponseProcessor = Depends(get_response_processor),
 ) -> str:
-    module_cfg = get_module_config(req.mod)
+    """Parse and process a list of paket from a forwarded request.
+
+    Parameters
+    ----------
+    request : Request
+        The incoming FastAPI request.
+    req : ListParseRequest
+        The parsed request body.
+    forwarder : IRequestForwarder
+        Dependency for forwarding the request.
+    processor : IResponseProcessor
+        Dependency for processing the response.
+
+    Returns:
+    -------
+    str
+        The processed response string.
+    """
     logger = getattr(request.state, "logger", None)
     try:
         query_dict = dict(request.query_params)
@@ -31,10 +47,7 @@ async def parse_list_paket(
             logger.info(f"[listpaket] Forwarded to {req.end}, response: {resp}")
 
         # Ambil list paket dari response (langsung dari resp['paket'] jika ada)
-        if isinstance(resp, dict) and "paket" in resp:
-            raw_data = resp["paket"]
-        else:
-            raw_data = []
+        raw_data = resp["paket"] if isinstance(resp, dict) and "paket" in resp else []
 
         processed = processor.process(raw_data)
         if logger:
@@ -48,9 +61,9 @@ async def parse_list_paket(
         )
         if logger:
             logger.info(f"[listpaket] Final message: {message}")
-        return message  # return string, bukan ListParseResponse
-
     except Exception as exc:
         log_error(exc, "[listpaket] ERROR: Unhandled exception")
-        traceback.print_exc()  # <-- Add this line to print the full traceback
+        traceback.print_exc()
         raise
+    else:
+        return message  # return string, bukan ListParseResponse
