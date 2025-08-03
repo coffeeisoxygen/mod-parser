@@ -1,3 +1,5 @@
+import os
+
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -42,4 +44,7 @@ async def root():  # noqa: D103
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    host = os.getenv("APP_HOST", "0.0.0.0")
+    port = int(os.getenv("APP_PORT", 8000))
+    reload = os.getenv("APP_HOTRELOAD", "True").lower() == "true"
+    uvicorn.run("main:app", host=host, port=port, reload=reload)
