@@ -1,3 +1,42 @@
+# 9. One-go ETL pipeline (final, efisien)
+def process_all(paket_list, prefix_filter):
+    """
+    Proses ETL satu kali loop: uppercase, filter prefix, clean quota, simplify quota.
+    Args:
+        paket_list: list of dict
+        prefix_filter: str, prefix dipisah koma
+    Returns:
+        list of dict hasil ETL
+    """
+    prefixes = [p.strip().upper() for p in prefix_filter.split(",") if p.strip()]
+    result = []
+    for paket in paket_list:
+        # Uppercase semua value string
+        new_paket = {
+            k: v.upper() if isinstance(v, str) else v for k, v in paket.items()
+        }
+        # Filter prefix productName
+        if any(
+            str(new_paket.get("productName", "")).startswith(prefix)
+            for prefix in prefixes
+        ):
+            continue
+        # Clean quota
+        quota = str(new_paket.get("quota", ""))
+        parts = []
+        for part in quota.split(","):
+            if "/" in part:
+                parts.append(part.split("/", 1)[1].strip())
+            else:
+                parts.append(part.strip())
+        cleaned_quota = ", ".join([p for p in parts if p])
+        # Simplify quota
+        cleaned_quota = simplify_quota(cleaned_quota)
+        new_paket["quota"] = cleaned_quota
+        result.append(new_paket)
+    return result
+
+
 # ruff:noqa
 # step by step analisis the logic and code then make the full implementation
 import json
@@ -6,49 +45,15 @@ from pathlib import Path
 from typing import Any
 
 
-# Regex simplifikasi quota
-def simplify_quota(quota: str) -> str:
-    # 1. Ganti "DAYS" atau "DAY" atau "HARI" menjadi "D"
-    quota = re.sub(r"\b(DAYS?|HARI)\b", "D", quota, flags=re.IGNORECASE)
-    # 2. Hilangkan spasi antara angka dan satuan (misal: "1 GB" -> "1GB")
-    quota = re.sub(r"(\d+)\s*GB", r"\1GB", quota, flags=re.IGNORECASE)
-    # 3. Hilangkan spasi sebelum/antara angka dan "D" (misal: "3 D" -> "3D")
-    quota = re.sub(r"(\d+)\s*D", r"\1D", quota, flags=re.IGNORECASE)
-    # 4. Standarisasi kata "NATIONAL" dan "NASIONAL" ke "NASIONAL"
-    quota = re.sub(r"\bNATIONAL\b", "NASIONAL", quota, flags=re.IGNORECASE)
-    # 5. Hilangkan spasi berlebih
-    quota = re.sub(r"\s+", " ", quota).strip()
-    return quota
+# 1. Load data
+def load_data(path):
+    """Memuat data dari file JSON dan mengembalikan list paket."""
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    return data["paket"]
 
 
-def simplify_all_quota(paket_list):
-    for paket in paket_list:
-        paket["quota"] = simplify_quota(str(paket.get("quota", "")))
-    return paket_list
-
-
-def format_output(paket_list):
-    """
-    Mengubah list of dict menjadi 1 baris string: #productid|productname(quota)|total#...
-    """
-    """
-    Mengubah list of dict menjadi 1 baris string: #productid|productname(quota)|total#...
-    Args:
-        paket_list: list of dict
-    Returns:
-        str: hasil format 1 baris
-    """
-    parts = []
-    for paket in paket_list:
-        pid = str(paket.get("productId", "-")).strip()
-        pname = str(paket.get("productName", "")).strip()
-        quota = str(paket.get("quota", "")).strip()
-        total = str(paket.get("total_", "")).strip()
-        part = f"#{pid}|{pname}({quota})|{total}"
-        parts.append(part)
-    return "".join(parts)
-
-
+# 2. Print sample
 def print_sample(data, label="Sample"):
     print(f"\n{label} (5 data awal):")
     for item in data[:5]:
@@ -61,16 +66,7 @@ def print_sample(data, label="Sample"):
     """
 
 
-HVCDATA_PATH = Path("experiment/HVCDATA.json")
-
-
-def load_data(path):
-    """Memuat data dari file JSON dan mengembalikan list paket."""
-    with open(path, encoding="utf-8") as f:
-        data = json.load(f)
-    return data["paket"]
-
-
+# 3. Count paket and char
 def count_paket_and_char(paket_list):
     """Menghitung jumlah paket dan total karakter JSON dari paket_list."""
     total_product = len(paket_list)
@@ -78,6 +74,7 @@ def count_paket_and_char(paket_list):
     return total_product, total_char
 
 
+# 4. Uppercase all text
 def uppercase_all_text(paket_list):
     """
     Mengubah semua value string pada list of dict menjadi huruf kapital (flat, efisien).
@@ -89,6 +86,7 @@ def uppercase_all_text(paket_list):
     ]
 
 
+# 5. Exclude product by name prefix
 def exclude_product_by_name_prefix(paket_list, product_name):
     """
     Buang paket jika productName diawali salah satu prefix (case-insensitive, koma dipisah).
@@ -108,7 +106,7 @@ def exclude_product_by_name_prefix(paket_list, product_name):
     ]
 
 
-# Bersihkan bagian sebelum '/' pada setiap part quota
+# 6. Clean all quota & clean_quota
 def clean_quota(quota: str) -> str:
     parts = []
     for part in quota.split(","):
@@ -125,80 +123,95 @@ def clean_all_quota(paket_list):
     return paket_list
 
 
-# ## Place holder one go proses
-# def process_all(paket_list, prefix_filter):
-#     prefixes = [p.strip().upper() for p in prefix_filter.split(",") if p.strip()]
-#     result = []
-#     for paket in paket_list:
-#         # Uppercase semua value string
-#         new_paket = {
-#             k: v.upper() if isinstance(v, str) else v for k, v in paket.items()
-#         }
-#         # Filter prefix productName
-#         if any(
-#             str(new_paket.get("productName", "")).startswith(prefix)
-#             for prefix in prefixes
-#         ):
-#             continue
-#         # Clean quota
-#         quota = str(new_paket.get("quota", ""))
-#         parts = []
-#         for part in quota.split(","):
-#             if "/" in part:
-#                 parts.append(part.split("/", 1)[1].strip())
-#             else:
-#                 parts.append(part.strip())
-#         new_paket["quota"] = ", ".join([p for p in parts if p])
-#         result.append(new_paket)
-#     return result
+# 7. Simplify all quota & simplify_quota
+def simplify_quota(quota: str) -> str:
+    # 1. Ganti "DAYS" atau "DAY" atau "HARI" menjadi "D"
+    quota = re.sub(r"\b(DAYS?|HARI)\b", "D", quota, flags=re.IGNORECASE)
+    # 2. Hilangkan spasi antara angka dan satuan (misal: "1 GB" -> "1GB")
+    quota = re.sub(r"(\d+)\s*GB", r"\1GB", quota, flags=re.IGNORECASE)
+    # 3. Hilangkan spasi sebelum/antara angka dan "D" (misal: "3 D" -> "3D")
+    quota = re.sub(r"(\d+)\s*D", r"\1D", quota, flags=re.IGNORECASE)
+    # 4. Standarisasi kata "INTERNET" ke "Net"
+    quota = re.sub(r"\bINTERNET\b", "Net", quota, flags=re.IGNORECASE)
+    # 5. Hilangkan spasi berlebih
+    quota = re.sub(r"\s+", " ", quota).strip()
+    return quota
+
+
+def simplify_all_quota(paket_list):
+    for paket in paket_list:
+        paket["quota"] = simplify_quota(str(paket.get("quota", "")))
+    return paket_list
+
+
+# 8. Format output
+def format_output(paket_list):
+    """
+    Mengubah list of dict menjadi 1 baris string: #productid|productname(quota)|total#...
+    Args:
+        paket_list: list of dict
+    Returns:
+        str: hasil format 1 baris
+    """
+    parts = []
+    for paket in paket_list:
+        pid = str(paket.get("productId", "-")).strip()
+        pname = str(paket.get("productName", "")).strip()
+        quota = str(paket.get("quota", "")).strip()
+        total = str(paket.get("total_", "")).strip()
+        part = f"#{pid}|{pname}({quota})|{total}"
+        parts.append(part)
+    return "".join(parts)
+
+
+HVCDATA_PATH = Path("experiment/HVCDATA.json")
 
 
 def main():
-    # ini simulasi Load / Menerima Response dari API
+    import cProfile
+    import pstats
+    import io
+
+    # Stepwise pipeline profiling
+    print("\n=== PROFILING: Stepwise Pipeline ===")
+    pr1 = cProfile.Profile()
+    pr1.enable()
     paket = load_data(Path("experiment/HVCDATA.json"))
-    print_sample(paket, "Setelah load data")
-    total_product, total_char = count_paket_and_char(paket)
-    print(f"total char : {total_char}")
-    print(f"total produk : {total_product}")
-
-    # Proses pertama: uppercase semua teks
-    paket = uppercase_all_text(paket)
-    print_sample(paket, "Setelah uppercase_all_text")
-    total_product, total_char = count_paket_and_char(paket)
-    print(f"total char : {total_char}")
-    print(f"total produk : {total_product}")
-
-    # Proses Kedua: Buang Product yang tidak relevan
-    # Contoh filter: buang produk yang nama depannya 'FACEBOOK', 'SUPER SERU INTERNET'
-    filtered = exclude_product_by_name_prefix(paket, "Facebook")
-    print_sample(filtered, "Setelah filter prefix")
-    filtered_product, filtered_char = count_paket_and_char(filtered)
-    print(f"total char : {filtered_char}")
-    print(f"total produk : {filtered_product}")
-
-    # Proses Ketiga: Bersihkan bagian sebelum '/' pada setiap part quota
+    paket2 = uppercase_all_text(paket)
+    filtered = exclude_product_by_name_prefix(paket2, "Facebook")
     cleaned_quota = clean_all_quota(filtered)
-    print_sample(cleaned_quota, "Setelah clean_all_quota (quota)")
-    cleaned_product, cleaned_char = count_paket_and_char(cleaned_quota)
-    print(f"total char : {cleaned_char}")
-    print(f"total produk : {cleaned_product}")
-
-    # Proses Keempat: Simplifikasi quota dengan regex
     simplified_quota = simplify_all_quota(cleaned_quota)
-    print_sample(simplified_quota, "Setelah simplify_all_quota (quota)")
-
-    # Proses terakhir: format output menjadi 1 baris string
     output_str = format_output(simplified_quota)
-    print("\n=== OUTPUT AKHIR (1 baris, 2000 char pertama) ===")
-    print(output_str[:2000] + ("..." if len(output_str) > 2000 else ""))
+    pr1.disable()
+    s1 = io.StringIO()
+    ps1 = pstats.Stats(pr1, stream=s1).sort_stats("cumulative")
+    ps1.print_stats(10)
+    print(s1.getvalue())
+
+    print_sample(simplified_quota, "Setelah simplify_all_quota (quota)")
+    print("\n=== OUTPUT AKHIR (stepwise, FULL) ===")
+    print(output_str)
+    print(f"\nTotal char akhir: {len(output_str)}")
+    print(f"Total paket akhir: {len(simplified_quota)}")
+
+    # One-go pipeline profiling
+    print("\n=== PROFILING: One-go Pipeline ===")
+    pr2 = cProfile.Profile()
+    pr2.enable()
+    onego = process_all(paket, "Facebook")
+    output_str2 = format_output(onego)
+    pr2.disable()
+    s2 = io.StringIO()
+    ps2 = pstats.Stats(pr2, stream=s2).sort_stats("cumulative")
+    ps2.print_stats(10)
+    print(s2.getvalue())
+
+    print_sample(onego, "Setelah process_all (one-go)")
+    print("\n=== OUTPUT AKHIR (one-go, FULL) ===")
+    print(output_str2)
+    print(f"\nTotal char akhir: {len(output_str2)}")
+    print(f"Total paket akhir: {len(onego)}")
 
 
 if __name__ == "__main__":
-    # profiler = cProfile.Profile()
-    # profiler.enable()
-    main()  # Call the function you want to profile
-    # profiler.disable()
-
-    # stats = pstats.Stats(profiler)
-    # stats.sort_stats("cumulative")  # Sort by cumulative time
-    # stats.print_stats()
+    main()

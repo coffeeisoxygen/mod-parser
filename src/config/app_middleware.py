@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .mlogger import logger
+from src.mlogger import logger
 
 
 def setup_cors(app: FastAPI):

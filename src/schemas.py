@@ -1,32 +1,19 @@
-"""schemas request yg masuk ke api parser."""
-
 import re
-from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+ALLOWED_COLUMNS = {"productid", "productname", "quota", "total_"}
+
 
 class TrimRequest(BaseModel):
-    """Model request trim, hanya field mandatory, semua query string diterima sebagai extra fields."""
-
     model_config = ConfigDict(extra="allow", str_strip_whitespace=True)
 
-    end: str = Field(
-        ..., description="Endpoint tujuan (mandatory)", examples=["list_paket"]
-    )
-    to: str = Field(
-        ...,
-        description="Tujuan dari request (mandatory, harus nomor HP Indonesia)",
-        examples=["08123456789", "628123456789"],
-    )
-    trxid: str = Field(
-        ..., description="Transaction ID (mandatory)", examples=["TRX123LIST"]
-    )
-
+    end: str = Field(..., description="Endpoint tujuan", examples=["list_paket"])
+    to: str = Field(..., description="No HP tujuan", examples=["08123456789"])
+    trxid: str = Field(..., description="Transaction ID", examples=["TRX123LIST"])
     kolom: str | None = Field(
-        None,
-        description="Kolom yang ingin ditampilkan (wajib: productId,productName,quota,total_ saja, urutan bebas)",
-        examples=["productId,productName,quota,total_"],
+        default=None,
+        description="Kolom yang ingin ditampilkan (boleh kombinasi productId,productName,quota,total_)",
     )
 
     @field_validator("kolom")
@@ -34,27 +21,16 @@ class TrimRequest(BaseModel):
     def validate_kolom(cls, v: str | None) -> str | None:
         if v is None:
             return v
-        allowed = {"productid", "productname", "quota", "total_"}
-        # Split, strip, dan lower
-        kolom_set = {k.strip().lower() for k in v.split(",") if k.strip()}
-        if kolom_set != allowed:
+        kolom_set = {k.strip().lower() for k in v.split(",")}
+        if not kolom_set.issubset(ALLOWED_COLUMNS):
             raise ValueError(
-                "Field 'kolom' hanya boleh berisi kombinasi productId, productName, quota, total_ (urutan bebas, tidak boleh ada kolom lain)"
+                f"Field 'kolom' hanya boleh kombinasi dari: {', '.join(ALLOWED_COLUMNS)}"
             )
         return v
 
     @field_validator("to")
     @classmethod
     def validate_phone_number(cls, v: str) -> str:
-        if not re.fullmatch(r"(0|62)\d{9,14}", v):
-            raise ValueError(
-                "Field 'to' harus nomor HP Indonesia valid (format 08... atau 628...)"
-            )
+        if not re.fullmatch(r"(0|62)\d{9,14}", v.strip()):
+            raise ValueError("No HP tidak valid")
         return v
-
-
-class TrimResponse(BaseModel):
-    """Response dari API trim, fleksibel."""
-
-    model_config = ConfigDict(extra="allow")
-    data: Any = Field(..., description="Payload response (bisa dict, list, dsb)")

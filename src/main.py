@@ -2,10 +2,14 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
-from src.lifespan import lifespan
-from src.middleware import setup_cors, setup_exception_handler, setup_logger_binding
+from src.config.app_lifespan import lifespan
+from src.config.app_middleware import (
+    setup_cors,
+    setup_exception_handler,
+    setup_logger_binding,
+)
+from src.config.app_router import register_routers
 from src.mlogger import LogConfig, LoggerManager
-from src.router import router
 
 load_dotenv()
 
@@ -26,7 +30,7 @@ app = FastAPI(
 )
 
 # Register router dan middleware
-app.include_router(router)
+register_routers(app)
 setup_cors(app)
 setup_logger_binding(app)
 setup_exception_handler(app)

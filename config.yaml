@@ -1,0 +1,15 @@
+modules:
+  name: "digipos"
+  method: GET
+  timeout: 10
+  max_retries: 3
+  seconds_between_retries: 3
+  regexs_replacement:
+    - "\\b(DAYS?|HARI)\\b"
+    - "(\\d+)\\s*GB"
+    - "(\\d+)\\s*D"
+    - "\\bINTERNET\\b"
+  excluded_product_prefixes:
+    - "Facebook" # fill with productNamePrefixes to exclude or just leave empty
+  url:
+    afcell: "http://10.0.0.3:10003"
