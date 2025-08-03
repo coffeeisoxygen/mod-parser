@@ -1,4 +1,4 @@
-"""pydantic settings for application and the data is provided by yaml."""
+"""ini adalah setup terkait logika bussiness ya , bukan application config."""
 
 from functools import lru_cache
 
@@ -19,14 +19,20 @@ class Modules(BaseModel):
 
 
 class Settings(YamlBaseSettings):
-    modules: Modules
-
-    # configure the path to the YAML file
+    modules: list[Modules]  # support multiple modules
     model_config = SettingsConfigDict(yaml_file="./config.yaml")
 
 
 @lru_cache
 def get_settings() -> Settings:
-    """Get the application settings."""
-    """This function is cached to avoid reloading settings multiple times."""
+    """Load settings from YAML with caching."""
     return Settings()  # type: ignore
+
+
+def get_module_by_name(name: str) -> Modules:
+    """Ambil module config berdasarkan nama (case-insensitive)."""
+    settings = get_settings()
+    for mod in settings.modules:
+        if mod.name.lower() == name.lower():
+            return mod
+    raise ValueError(f"Module '{name}' not found")
