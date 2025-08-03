@@ -11,13 +11,12 @@ from src.config.app_middleware import (
     setup_logger_binding,
 )
 from src.config.app_router import register_routers
-from src.mlogger import LogConfig, LoggerManager
+from src.mlogger import LogConfig, LoggerManager, parse_log_level
 
 load_dotenv()
-
-# Setup logger (hanya sekali di awal)
+log_level = os.getenv("APP_LOG_LEVEL", "INFO")
 log_config = LogConfig(
-    level="INFO",
+    level=parse_log_level(log_level),
     to_terminal=True,
     to_file=False,
     format_style="simple",

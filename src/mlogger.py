@@ -407,7 +407,6 @@ class LoggerManager:
 
 
 # --- Logger khusus progress/debug (log di satu baris) ---
-import sys as _sys
 
 
 def _progress_formatter(record):
@@ -432,7 +431,7 @@ def _progress_formatter(record):
 
 logger_progress = loguru_logger.bind()
 _progress_handler_id = logger_progress.add(
-    _sys.stderr, format=_progress_formatter, level="DEBUG"
+    sys.stderr, format=_progress_formatter, level="DEBUG"
 )
 """
 logger_progress: Logger khusus untuk progress/debug satu baris.
@@ -500,10 +499,26 @@ def request_id() -> str:
     return str(uuid.uuid4())
 
 
+def parse_log_level(level: str) -> Level:
+    """Parse log level string to Loguru Level."""
+    allowed = {"TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL"}
+    lvl = str(level).upper()
+    return lvl if lvl in allowed else "INFO"  # type: ignore
+
+
 __all__ = [
     "LogConfig",
     "LoggerManager",
+    "caller_info",
     "log_error",
+    "log_error",
+    "log_exception_with_caller",
     "logger",
+    "logger",
+    "logger_progress",
+    "logger_progress",
+    "parse_log_level",
+    "parse_log_level",
+    "request_id",
     "request_id",
 ]
