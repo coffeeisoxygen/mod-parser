@@ -6,12 +6,32 @@ ALLOWED_COLUMNS = {"productid", "productname", "quota", "total_"}
 
 
 class ListParseRequest(BaseModel):
-    model_config = ConfigDict(extra="allow", str_strip_whitespace=True)
+    model_config = ConfigDict()
 
     mod: str = Field(..., description="Nama modul target (misal digipos)")
     end: str = Field(..., description="Endpoint target (misal list_paket)")
+    username: str | None = Field(
+        default=None,
+        description="Username untuk otentikasi (opsional, jika diperlukan oleh modul)",
+    )
+    mark_json: int | None = Field(
+        default=1,
+        description="Tandai JSON sebagai valid (opsional, jika diperlukan oleh modul)",
+    )
+    up_harga: int | None = Field(
+        default=1,
+        description="Tandai harga sebagai valid (opsional, jika diperlukan oleh modul)",
+    )
     to: str = Field(..., description="Nomor HP tujuan (format 08... atau 628...)")
+    category: str | None = Field(
+        default=None,
+        description="Kategori paket (default: 'paket', bisa diubah sesuai kebutuhan)",
+    )
     trxid: str = Field(..., description="Transaction ID unik per request")
+    payment_method: str | None = Field(
+        default=None,
+        description="Metode pembayaran (opsional, jika diperlukan oleh modul)",
+    )
     kolom: str | None = Field(
         default=None,
         description="Kolom output (opsional): productId, productName, quota, total_",
