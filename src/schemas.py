@@ -23,12 +23,13 @@ class ListParseRequest(BaseModel):
     def validate_kolom(cls, v: str | None) -> str | None:
         if v is None:
             return v
-        kolom_set = {k.strip().lower() for k in v.split(",") if k.strip()}
+        kolom_raw = [k.strip() for k in v.split(",") if k.strip()]
+        kolom_set = {k.lower() for k in kolom_raw}
         if not kolom_set.issubset(ALLOWED_COLUMNS):
             raise ValueError(
                 f"Field 'kolom' hanya boleh kombinasi dari: {', '.join(ALLOWED_COLUMNS)}"
             )
-        return v
+        return ",".join(kolom_raw)
 
     @field_validator("to")
     @classmethod

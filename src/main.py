@@ -11,7 +11,7 @@ from src.config.app_middleware import (
     setup_logger_binding,
 )
 from src.config.app_router import register_routers
-from src.mlogger import LogConfig, LoggerManager, parse_log_level
+from src.mlogger import LogConfig, LoggerManager, logger, parse_log_level
 
 load_dotenv()
 log_level = os.getenv("APP_LOG_LEVEL", "INFO")
@@ -23,6 +23,7 @@ log_config = LogConfig(
     bind_context={"app": "mod-parser"},
 )
 LoggerManager(log_config).setup()
+logger.debug("Logger initialized with config", log_config=log_config)
 
 app = FastAPI(
     title="API Parser",
@@ -31,10 +32,12 @@ app = FastAPI(
 )
 
 # Register router dan middleware
-register_routers(app)
+
 setup_cors(app)
 setup_logger_binding(app)
 setup_exception_handler(app)
+
+register_routers(app)
 
 
 @app.get("/")

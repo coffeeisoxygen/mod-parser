@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from src.config.mod_settings import ModuleConfig
 from src.dependencies.modules import get_module_config
 from src.dependencies.req_depends import get_request_forwarder, get_response_processor
 from src.interfaces.ireq_forwarder import IRequestForwarder
 from src.interfaces.ireq_response import IResponseProcessor
-from src.mlogger import log_error, logger
+from src.mlogger import log_error
 from src.schemas import ListParseRequest, ListParseResponse
 
 router = APIRouter()
@@ -12,54 +12,40 @@ router = APIRouter()
 
 @router.get("/listpaket", response_model=ListParseResponse)
 async def parse_list_paket(
+    request: Request,
     req: ListParseRequest = Depends(),
     module_cfg: ModuleConfig = Depends(get_module_config),
     forwarder: IRequestForwarder = Depends(get_request_forwarder),
     processor: IResponseProcessor = Depends(get_response_processor),
 ) -> ListParseResponse:
-    """Parse and forward a list paket request, process the response, and return a formatted message.
-
-    Parameters
-    ----------
-    req : ListParseRequest
-        The request parameters.
-    module_cfg : ModuleConfig
-        The module configuration.
-    forwarder : IRequestForwarder
-        The request forwarder dependency.
-    processor : IResponseProcessor
-        The response processor dependency.
-
-    Returns:
-    -------
-    ListParseResponse
-        The formatted response message.
-    """
+    logger = getattr(request.state, "logger", None)
     try:
-        # Step 1: Build target URL
-        target_url = f"{module_cfg.base_url}/{req.end}"
-        # Step 2: Convert request to dict, hapus kolom `mod`
         query_dict = req.model_dump(exclude={"mod"})
-        logger.info(f"[listpaket] Incoming request: {query_dict}")
+        if logger:
+            logger.info(f"[listpaket] Incoming request: {query_dict}")
 
-        # Step 3: Forward GET ke target external
-        resp = await forwarder.forward(target_url, query_dict)
-        logger.info(f"[listpaket] Forwarded to {target_url}, response: {resp}")
-        raw_data = resp.get("data", [])
+        resp = await forwarder.forward(req.end, query_dict)
+        if logger:
+            logger.info(f"[listpaket] Forwarded to {req.end}, response: {resp}")
 
-        # Step 4: Proses paket list
+        raw_data = resp.get("data")
+        if not isinstance(raw_data, list):
+            raw_data = []
+
         processed = processor.process(raw_data)
-        logger.info(f"[listpaket] Processed data: {processed}")
+        if logger:
+            logger.info(f"[listpaket] Processed data: {processed}")
 
-        # Step 5: Format jadi 1 string
         message = processor.to_response_string(
             result=processed,
             trxid=req.trxid,
             to=req.to,
             category=query_dict.get("category", "paket"),
         )
-        logger.info(f"[listpaket] Final message: {message}")
+        if logger:
+            logger.info(f"[listpaket] Final message: {message}")
         return ListParseResponse(message=message)
+
     except Exception as exc:
         log_error(exc, "[listpaket] ERROR: Unhandled exception")
         raise

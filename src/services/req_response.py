@@ -1,6 +1,7 @@
 import re
 
 from src.interfaces.ireq_response import IResponseProcessor
+from src.mlogger import logger
 
 
 class ResponseProcessor(IResponseProcessor):
@@ -17,6 +18,7 @@ class ResponseProcessor(IResponseProcessor):
         self.prefixes = [p.strip().upper() for p in (list_prefixes or [])]
         self.replace_with_regex = replace_with_regex
         self.regexs_replacement = list_regex_replacement or []
+        self.logger = logger.bind(class_name="ResponseProcessor")
 
     def clean_quota_parts(self, quota: str) -> str:
         """Cleans quota string by removing text before '/' and extra spaces."""
@@ -40,6 +42,7 @@ class ResponseProcessor(IResponseProcessor):
 
     def process(self, paket_list: list[dict]) -> list[dict]:
         """Processes a list of paket dictionaries by filtering and cleaning based on config flags."""
+        self.logger.info("Processing paket_list", paket_list=paket_list)
         result = []
         for paket in paket_list:
             processed = {
@@ -56,6 +59,7 @@ class ResponseProcessor(IResponseProcessor):
             simplified = self.simplify_quota_words(cleaned)
             processed["quota"] = simplified
             result.append(processed)
+        self.logger.info("Processed result", result=result)
         return result
 
     def to_response_string(
@@ -70,6 +74,13 @@ class ResponseProcessor(IResponseProcessor):
 
         Format: trxid=...&to=...&status=success&message=listpaket in {category} : {result}
         """
+        self.logger.info(
+            "Formatting response string",
+            result=result,
+            trxid=trxid,
+            to=to,
+            category=category,
+        )
         if sort_by_name:
             result = sorted(result, key=lambda p: str(p.get("productName", "")).lower())
         parts = []
@@ -80,4 +91,6 @@ class ResponseProcessor(IResponseProcessor):
             total = str(p.get("total_", "")).strip()
             parts.append(f"{pid}#{name}({quota})#{total}")
         final = "".join(parts)
-        return f"trxid={trxid}&to={to}&status=success&message=listpaket in {category} : {final}"
+        response_str = f"trxid={trxid}&to={to}&status=success&message=listpaket in {category} : {final}"
+        self.logger.info("Response string created", response=response_str)
+        return response_str
