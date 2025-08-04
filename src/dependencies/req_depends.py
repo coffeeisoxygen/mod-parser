@@ -2,7 +2,7 @@
 
 from fastapi import Depends
 from src.config.mod_settings import ModuleConfig
-from src.dependencies.modules import get_module_config
+from src.dependencies.mod_depends import get_module_config
 from src.interfaces.ireq_forwarder import IRequestForwarder
 from src.interfaces.ireq_response import IResponseProcessor
 from src.mlogger import logger  # add logger import

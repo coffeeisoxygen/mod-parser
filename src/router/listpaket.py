@@ -44,13 +44,13 @@ async def parse_list_paket(
 
         resp = await forwarder.forward(req.end, query_dict)
         if logger:
-            logger.info(f"[listpaket] Forwarded to {req.end}, response: {resp}")
+            logger.debug(f"[listpaket] Forwarded to {req.end}, response: {resp}")
 
         raw_data = resp["paket"] if isinstance(resp, dict) and "paket" in resp else []
 
         processed = processor.process(raw_data)
         if logger:
-            logger.info(f"[listpaket] Processed data: {processed}")
+            logger.debug(f"[listpaket] Processed data: {processed}")
 
         message = processor.to_response_string(
             result=processed,
@@ -60,7 +60,7 @@ async def parse_list_paket(
         )
         stats = processor.get_stats()
         if logger:
-            logger.info(f"[listpaket] Final message: {message}")
+            logger.debug(f"[listpaket] Final message: {message}")
         info_str = f"info=before:(char={stats['char_before']}|list={stats['product_before']})after:(char={stats['char_after']}|list={stats['product_after']})"
         return PlainTextResponse(content=f"{info_str}&{message}")
     except Exception as exc:

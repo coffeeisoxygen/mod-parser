@@ -43,7 +43,7 @@ class ResponseProcessor(IResponseProcessor):
 
     def process(self, paket_list: list[dict]) -> list[dict]:
         """Processes a list of paket dictionaries by filtering and cleaning based on config flags."""
-        self.logger.info("Processing paket_list", paket_list=paket_list)
+        self.logger.debug("Processing paket_list", paket_list=paket_list)
         before_total_product = len(paket_list)
         before_total_char = sum(len(str(p)) for p in paket_list)
         self.logger.info(
@@ -77,7 +77,7 @@ class ResponseProcessor(IResponseProcessor):
             total_char_after=after_total_char,
             total_product_after=after_total_product,
         )
-        self.logger.info("Processed result", result=result)
+        self.logger.debug("Processed result", result=result)
         # Simpan statistik ke internal state
         self._stats = {
             "char_before": before_total_char,
@@ -99,7 +99,7 @@ class ResponseProcessor(IResponseProcessor):
 
         Format: trxid=...&to=...&status=success&message=listpaket in {category} : {result}
         """
-        self.logger.info(
+        self.logger.debug(
             "Formatting response string",
             result=result,
             trxid=trxid,
@@ -117,7 +117,7 @@ class ResponseProcessor(IResponseProcessor):
             parts.append(f"{pid}#{name}({quota})#{total}")
         final = "".join(parts)
         response_str = f"trxid={trxid}&to={to}&status=success&message=listpaket in {category} : {final}"
-        self.logger.info("Response string created", response=response_str)
+        self.logger.debug("Response string created", response=response_str)
         return response_str
 
     def get_stats(self) -> dict:

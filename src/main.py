@@ -11,7 +11,7 @@ from src.config.app_middleware import (
     setup_logger_binding,
 )
 from src.config.app_router import register_routers
-from src.dependencies.modules import get_settings
+from src.dependencies.mod_depends import get_settings
 from src.mlogger import LogConfig, LoggerManager, logger, parse_log_level
 
 load_dotenv()
