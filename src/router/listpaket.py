@@ -61,9 +61,8 @@ async def parse_list_paket(
         stats = processor.get_stats()
         if logger:
             logger.info(f"[listpaket] Final message: {message}")
-        return PlainTextResponse(
-            content=f"{message}\n\n[INFO] char_before={stats['char_before']}, char_after={stats['char_after']}, product_before={stats['product_before']}, product_after={stats['product_after']}"
-        )
+        info_str = f"info=before:(char={stats['char_before']}|list={stats['product_before']})after:(char={stats['char_after']}|list={stats['product_after']})"
+        return PlainTextResponse(content=f"{info_str}&{message}")
     except Exception as exc:
         log_error(exc, "[listpaket] ERROR: Unhandled exception")
         traceback.print_exc()
