@@ -1,8 +1,9 @@
 from enum import StrEnum
+from typing import Any
 
 from pydantic import Field, field_validator, model_validator
 
-from src.schemas.base import BaseDomainRequest
+from src.schemas.base import BaseDomainRequest, BaseDomainResponse
 
 
 class PackageCategoryEnum(StrEnum):
@@ -120,3 +121,11 @@ class DigiposReqBuyPaketData(BaseDomainRequest):
         if self.payment_method == PaymentMethodEnum.NGRS:
             raise ValueError("Pembelian paket data hanya mendukung LINKAJA saat ini.")
         return self
+
+
+class DigiposResponse(BaseDomainResponse):
+    """Response Schema untuk Digipos."""
+
+    req: dict[str, Any] | None = None
+    resp: list[dict[str, Any]] | None = None
+    paket: list[dict[str, Any]] | None = None

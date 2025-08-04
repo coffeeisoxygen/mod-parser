@@ -48,3 +48,14 @@ class BaseDomainRequest(BaseModel):
         if not value.isdigit():
             raise ValueError("Nomor HP/voucher hanya boleh berisi angka (numbers only)")
         return v
+
+
+class BaseDomainResponse(BaseModel):
+    """Base response schema for domain responses."""
+
+    model_config = ConfigDict(extra="allow")
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "BaseDomainResponse":
+        """Create an instance from a dictionary."""
+        return cls(**data)
