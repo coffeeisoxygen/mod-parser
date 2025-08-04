@@ -4,7 +4,7 @@ from typing import Any
 from pydantic import Field, PositiveInt, model_validator
 
 from src.domain.digipos.sch_paketdata import PaymentMethodEnum
-from src.schemas.base import BaseDomainRequest, BaseDomainResponse
+from src.schemas.base_schemas import BaseDomainRequest, BaseDomainResponse
 
 
 class PulsaPackageCategoryEnum(StrEnum):

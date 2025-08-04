@@ -1,9 +1,9 @@
 from enum import StrEnum
 from typing import Any
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, PositiveInt, field_validator, model_validator
 
-from src.schemas.base import BaseDomainRequest, BaseDomainResponse
+from src.schemas.base_schemas import BaseDomainRequest, BaseDomainResponse
 
 
 class PackageCategoryEnum(StrEnum):
@@ -51,7 +51,7 @@ class DigiposReqListPaketData(BaseDomainRequest):
         examples=[PaymentMethodEnum.LINKAJA, PaymentMethodEnum.NGRS],
     )
 
-    up_harga: int | None = Field(
+    up_harga: PositiveInt | None = Field(
         default=0,
         description="Harga Untuk Melakukan Markup kepada harga paket data.",
         examples=[0, 10000],
@@ -103,7 +103,7 @@ class DigiposReqBuyPaketData(BaseDomainRequest):
         description="Apakah ingin melakukan pengecekan sebelum pembelian? 1 untuk ya, 0 untuk tidak.",
         examples=[1, 0],
     )
-    up_harga: int | None = Field(
+    up_harga: PositiveInt | None = Field(
         default=0,
         description="Harga Untuk Melakukan Markup kepada harga paket data.",
         examples=[0, 10000],
