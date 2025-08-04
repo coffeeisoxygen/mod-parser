@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import Any
 
-from pydantic import Field, PositiveInt, model_validator
+from pydantic import Field, model_validator
 
 from src.domain.digipos.base_validator import (
     CheckFieldIsZeroOrOne,
@@ -88,11 +88,6 @@ class DigiposReqBuyPaketData(BaseDomainRequest):
     check: CheckFieldIsZeroOrOne = Field(
         description="Apakah ingin melakukan pengecekan sebelum pembelian? 1 untuk ya, 0 untuk tidak.",
         examples=[1, 0],
-    )
-    up_harga: PositiveInt | None = Field(
-        default=0,
-        description="Harga Untuk Melakukan Markup kepada harga paket data.",
-        examples=[0, 10000],
     )
 
 

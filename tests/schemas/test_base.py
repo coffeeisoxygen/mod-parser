@@ -1,6 +1,6 @@
 import pytest
 from pydantic import ValidationError
-from src.schemas.base import BaseDomainRequest
+from src.schemas.base_schemas import BaseDomainRequest
 
 
 def test_valid_base_domain_request():

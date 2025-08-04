@@ -3,7 +3,12 @@ from typing import Any
 
 from pydantic import Field, PositiveInt, model_validator
 
-from src.domain.digipos.sch_paketdata import PaymentMethodEnum
+from src.domain.digipos.base_validator import (
+    CheckFieldIsZeroOrOne,
+    LinkajaOnlyPaymentMethod,
+    MarkUpIsZeroOrMore,
+    PaymentMethodEnum,
+)
 from src.schemas.base_schemas import BaseDomainRequest, BaseDomainResponse
 
 
@@ -21,24 +26,16 @@ class DigiposReqListPulsa(BaseDomainRequest):
         description="Jumlah pulsa yang ingin dilihat, biasanya dalam satuan ribu.",
         examples=[1000, 5000, 10000],
     )
-    payment_method: PaymentMethodEnum = Field(
-        description="Metode pembayaran yang digunakan, seperti LINKAJA atau NGRS.",
+    payment_method: LinkajaOnlyPaymentMethod = Field(
+        description="Metode pembayaran yang digunakan, seperti LINKAJA atau NGRS. Untuk List Ini Haru LinkAja.",
         examples=[PaymentMethodEnum.LINKAJA, PaymentMethodEnum.NGRS],
     )
 
-    up_harga: int | None = Field(
+    up_harga: MarkUpIsZeroOrMore | None = Field(
         default=0,
         description="Mark Up Harga nya.",
         examples=[1000, 5000, 10000],
     )
-
-    @model_validator(mode="after")
-    def validate_payment_method(self) -> "DigiposReqListPulsa":
-        if self.payment_method != PaymentMethodEnum.LINKAJA:
-            raise ValueError(
-                "Pulsa hanya boleh menggunakan LINKAJA sebagai payment_method."
-            )
-        return self
 
 
 class DigiposReqBuyPulsa(BaseDomainRequest):
@@ -53,12 +50,12 @@ class DigiposReqBuyPulsa(BaseDomainRequest):
         description="Metode pembayaran yang digunakan, seperti LINKAJA atau NGRS.",
         examples=[PaymentMethodEnum.LINKAJA, PaymentMethodEnum.NGRS],
     )
-    up_harga: int | None = Field(
+    up_harga: MarkUpIsZeroOrMore | None = Field(
         default=0,
         description="Harga Untuk Melakukan Markup kepada harga pulsa.",
         examples=[0, 10000],
     )
-    check: int = Field(
+    check: CheckFieldIsZeroOrOne = Field(
         description="Check untuk memastikan Harga pulsa yang dibeli valid. 1 untuk validasi, 0 untuk tidak.",
         examples=[0, 1],
     )

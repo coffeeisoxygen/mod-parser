@@ -21,7 +21,7 @@ def test_valid_buy_paket_data_minimal():
     assert req.category == PackageCategoryEnum.DATA
     assert req.product_id == "00017864"
     assert req.payment_method == PaymentMethodEnum.LINKAJA
-    assert req.up_harga == 0
+    assert req.markup == 0
     assert req.check == 0
 
 
@@ -34,10 +34,10 @@ def test_valid_buy_paket_data_with_optional():
         product_id="00017864",
         payment_method=PaymentMethodEnum.LINKAJA,
         check=1,
-        up_harga=5000,
+        markup=5000,
     )
     assert req.check == 1
-    assert req.up_harga == 5000
+    assert req.markup == 5000
 
 
 def test_invalid_payment_method_ngrs():

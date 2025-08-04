@@ -14,7 +14,7 @@ class PaymentMethodEnum(StrEnum):
 def validate_linkaja_only(v: PaymentMethodEnum) -> PaymentMethodEnum:
     """Memastikan metode pembayaran hanya LINKAJA."""
     if v == PaymentMethodEnum.NGRS:
-        raise ValueError("Pembelian paket data hanya mendukung LINKAJA saat ini.")
+        raise ValueError("Pembelian Ini Hanya Bisa Dengan Methode LinkAJA")
     return v
 
 

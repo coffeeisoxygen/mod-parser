@@ -31,9 +31,7 @@ def test_invalid_payment_method_for_data():
             payment_method=PaymentMethodEnum.NGRS,
             kolom=["productId", "productName", "quota", "total_"],
         )
-    assert "Paket DATA hanya boleh menggunakan LINKAJA sebagai payment_method." in str(
-        exc_info.value
-    )
+    assert "Pembelian Ini Hanya Bisa Dengan Methode LinkAJA" in str(exc_info.value)
 
 
 def test_invalid_kolom_missing_required():
@@ -60,11 +58,11 @@ def test_valid_with_optional_fields():
         kolom=["productId", "productName", "quota", "total_"],
         sub_category="Combo Sakti",
         duration="30 Days",
-        up_harga=5000,
+        markup=5000,
     )
     assert req.sub_category == "Combo Sakti"
     assert req.duration == "30 Days"
-    assert req.up_harga == 5000
+    assert req.markup == 5000
 
 
 def test_default_kolom():
