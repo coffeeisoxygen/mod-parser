@@ -26,3 +26,23 @@ class BaseDomainRequest(BaseModel):
         if not value.isdigit():
             raise ValueError("Nomor HP/voucher hanya boleh berisi angka (numbers only)")
         return v
+
+    @field_validator("username", mode="after")
+    @classmethod
+    def validate_username_alnum(cls, v: str) -> str:
+        value = v.strip()
+        if not value.isalnum():
+            raise ValueError(
+                "Username hanya boleh berisi angka dan huruf (alphanumeric only)"
+            )
+        return v
+
+    @field_validator("trxid", mode="after")
+    @classmethod
+    def validate_trxid_alnum(cls, v: str) -> str:
+        value = v.strip()
+        if not value.isalnum():
+            raise ValueError(
+                "ID transaksi hanya boleh berisi angka dan huruf (alphanumeric only)"
+            )
+        return v

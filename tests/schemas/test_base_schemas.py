@@ -63,3 +63,102 @@ def test_username_length_constraints() -> None:
     # Too long
     with pytest.raises(ValidationError):
         BaseDomainRequest(username="a" * 33, to="08123456789", trxid="21412LIST")
+
+
+@pytest.mark.parametrize(
+    "trxid_value",
+    [
+        "21412LIST",
+        "123124",
+        "abcDEF123",
+        "A1B2C3",
+        "0",
+        "a",
+        "Z9",
+        "1234567890",
+    ],
+)
+def test_base_domain_request_valid_trxid(trxid_value: str) -> None:
+    req = BaseDomainRequest(
+        username="ACCOUNTDIGIPOS", to="08123456789", trxid=trxid_value
+    )
+    assert req.trxid == trxid_value
+
+
+@pytest.mark.parametrize(
+    "trxid_value,expected_msg",
+    [
+        ("", "ID transaksi hanya boleh berisi angka dan huruf (alphanumeric only)"),
+        (
+            "123 456",
+            "ID transaksi hanya boleh berisi angka dan huruf (alphanumeric only)",
+        ),
+        (
+            "abc-123",
+            "ID transaksi hanya boleh berisi angka dan huruf (alphanumeric only)",
+        ),
+        (
+            "abc_123",
+            "ID transaksi hanya boleh berisi angka dan huruf (alphanumeric only)",
+        ),
+        (
+            "@trxid!",
+            "ID transaksi hanya boleh berisi angka dan huruf (alphanumeric only)",
+        ),
+    ],
+)
+def test_base_domain_request_invalid_trxid(trxid_value: str, expected_msg: str) -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        BaseDomainRequest(
+            username="ACCOUNTDIGIPOS", to="08123456789", trxid=trxid_value
+        )
+    assert expected_msg in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    "username_value",
+    [
+        "ACCOUNTDIGIPOS",
+        "user123",
+        "A1B2C3",
+        "abcDEF",
+        "123456",
+        "aSA",
+        "Z9ASDA",
+        "userUSER123",
+    ],
+)
+def test_base_domain_request_valid_username(username_value: str) -> None:
+    req = BaseDomainRequest(
+        username=username_value, to="08123456789", trxid="21412LIST"
+    )
+    assert req.username == username_value
+
+
+@pytest.mark.parametrize(
+    "username_value,expected_msg",
+    [
+        ("", "Username hanya boleh berisi angka dan huruf (alphanumeric only)"),
+        (
+            "user name",
+            "Username hanya boleh berisi angka dan huruf (alphanumeric only)",
+        ),
+        (
+            "user-name",
+            "Username hanya boleh berisi angka dan huruf (alphanumeric only)",
+        ),
+        (
+            "user_name",
+            "Username hanya boleh berisi angka dan huruf (alphanumeric only)",
+        ),
+        ("user@123", "Username hanya boleh berisi angka dan huruf (alphanumeric only)"),
+        ("user.123", "Username hanya boleh berisi angka dan huruf (alphanumeric only)"),
+        ("user!", "Username hanya boleh berisi angka dan huruf (alphanumeric only)"),
+    ],
+)
+def test_base_domain_request_invalid_username(
+    username_value: str, expected_msg: str
+) -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        BaseDomainRequest(username=username_value, to="08123456789", trxid="21412LIST")
+    assert expected_msg in str(exc_info.value)
