@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import BeforeValidator, Field, field_validator
+from pydantic import BeforeValidator, Field
 
 
 class PaymentMethodEnum(StrEnum):
@@ -45,5 +45,5 @@ def validate_markup(v: int) -> int:
 MarkUpIsZeroOrMore = Annotated[
     int,
     Field(description="Markup harga untuk paket data"),
-    field_validator("up_harga")(validate_markup),
+    BeforeValidator(validate_markup),
 ]

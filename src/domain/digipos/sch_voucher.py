@@ -21,13 +21,6 @@ class DigiposBaseVoucherRequest(BaseDomainRequest):
         examples=[1000, 5000, 10000],
     )
 
-    @field_validator("markup")
-    @classmethod
-    def validate_markup(cls, v):
-        if v is not None and v < 0:
-            raise ValueError("Markup harga hanya boleh 0 atau lebih besar")
-        return v
-
 
 class DigiposReqListVoucher(DigiposBaseVoucherRequest):
     """Schemas untuk melihat List Voucher yang tersedia."""
