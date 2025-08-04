@@ -23,6 +23,19 @@ LinkajaOnlyPaymentMethod = Annotated[
 ]
 
 
+def Validate_both_paymentvalid(v: PaymentMethodEnum) -> PaymentMethodEnum:
+    """Pembayaran boleh yang mana aja."""
+    """Memastikan metode pembayaran valid untuk kedua kategori."""
+    if v not in (PaymentMethodEnum.LINKAJA, PaymentMethodEnum.NGRS):
+        raise ValueError("Pembelian Ini Hanya Bisa Dengan Methode LinkAJA atau NGRS")
+    return v
+
+
+BothPaymentValid = Annotated[
+    PaymentMethodEnum, BeforeValidator(Validate_both_paymentvalid)
+]
+
+
 def validate_param_check(v: int) -> int:
     """Validasi parameter check, hanya boleh 1 atau 0."""
     if v not in (0, 1):
