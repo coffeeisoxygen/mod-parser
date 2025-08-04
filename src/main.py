@@ -4,6 +4,7 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
+from _version import __version__ as version
 from src.config.app_lifespan import lifespan
 from src.config.app_middleware import (
     setup_cors,
@@ -28,6 +29,7 @@ logger.debug("Logger initialized with config", log_config=log_config)
 settings = get_settings()
 app = FastAPI(
     title="API Parser",
+    version=version,
     description="Parser API untuk forward requests",
     lifespan=lifespan,
 )
