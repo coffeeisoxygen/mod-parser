@@ -68,7 +68,7 @@ def test_valid_buy_pulsa_bulk():
 
 
 def test_invalid_buy_pulsa_category_payment():
-    # FIX but payment_method != NGRS
+    #  but payment_method != NGRS
     with pytest.raises(ValidationError) as exc_info:
         DigiposReqBuyPulsa(
             username="ACCOUNTDIGIPOS",
