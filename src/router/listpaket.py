@@ -6,7 +6,7 @@ from src.dependencies.req_depends import get_request_forwarder, get_response_pro
 from src.interfaces.ireq_forwarder import IRequestForwarder
 from src.interfaces.ireq_response import IResponseProcessor
 from src.mlogger import log_error
-from src.schemas import ListParseRequest
+from src.prev_schemas import ListParseRequest
 
 router = APIRouter()
 
