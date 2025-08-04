@@ -51,7 +51,7 @@ def test_invalid_payment_method_ngrs():
             payment_method=PaymentMethodEnum.NGRS,
             check=1,
         )
-    assert "Pembelian paket data hanya mendukung LINKAJA" in str(exc_info.value)
+    assert "Pembelian Ini Hanya Bisa Dengan Methode LinkAJA" in str(exc_info.value)
 
 
 def test_missing_required_fields():

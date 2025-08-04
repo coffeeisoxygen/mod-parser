@@ -23,7 +23,7 @@ class DigiposReqListPulsa(BaseDomainRequest):
     """schemas untuk melihat List Pulsa."""
 
     amount: PositiveInt = Field(
-        description="Jumlah pulsa yang ingin dilihat, biasanya dalam satuan ribu.",
+        description="Jumlah pulsa yang ingin dibeli, biasanya dalam satuan ribu.",
         examples=[1000, 5000, 10000],
     )
     payment_method: LinkajaOnlyPaymentMethod = Field(
@@ -31,7 +31,7 @@ class DigiposReqListPulsa(BaseDomainRequest):
         examples=[PaymentMethodEnum.LINKAJA, PaymentMethodEnum.NGRS],
     )
 
-    up_harga: MarkUpIsZeroOrMore | None = Field(
+    markup: MarkUpIsZeroOrMore | None = Field(
         default=0,
         description="Mark Up Harga nya.",
         examples=[1000, 5000, 10000],
@@ -50,7 +50,7 @@ class DigiposReqBuyPulsa(BaseDomainRequest):
         description="Metode pembayaran yang digunakan, seperti LINKAJA atau NGRS.",
         examples=[PaymentMethodEnum.LINKAJA, PaymentMethodEnum.NGRS],
     )
-    up_harga: MarkUpIsZeroOrMore | None = Field(
+    markup: MarkUpIsZeroOrMore | None = Field(
         default=0,
         description="Harga Untuk Melakukan Markup kepada harga pulsa.",
         examples=[0, 10000],

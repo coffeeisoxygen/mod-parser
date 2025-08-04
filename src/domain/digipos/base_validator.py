@@ -31,7 +31,7 @@ def validate_param_check(v: int) -> int:
 
 
 CheckFieldIsZeroOrOne = Annotated[
-    int, Field(description="Check 0/1"), field_validator("check")(validate_param_check)
+    int, Field(description="Check 0/1"), BeforeValidator(validate_param_check)
 ]
 
 

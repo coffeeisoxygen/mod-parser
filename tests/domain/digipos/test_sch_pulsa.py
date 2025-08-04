@@ -33,7 +33,7 @@ def test_invalid_list_pulsa_payment_method():
             amount=10000,
             payment_method=PaymentMethodEnum.NGRS,
         )
-    assert "Pulsa hanya boleh menggunakan LINKAJA" in str(exc_info.value)
+    assert "Pembelian Ini Hanya Bisa Dengan Methode LinkAJA" in str(exc_info.value)
 
 
 def test_valid_buy_pulsa_fix():

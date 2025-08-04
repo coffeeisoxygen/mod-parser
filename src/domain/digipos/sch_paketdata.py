@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import Any
 
-from pydantic import Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from src.domain.digipos.base_validator import (
     CheckFieldIsZeroOrOne,
@@ -47,6 +47,13 @@ class DigiposBasePackageRequest(BaseDomainRequest):
     )
 
 
+class DigiposOptionalCheck(BaseModel):
+    check: CheckFieldIsZeroOrOne = Field(
+        description="Jika Check=1, Maka Akan menjadi Mode Postpaid, dan Check=0 akan menjadi mode direct transaction tanpa check",
+        examples=[1, 0],
+    )
+
+
 class DigiposReqListPaketData(DigiposBasePackageRequest):
     """Request Schemas ketika user ingin memlihat List Paket eligible untuk nomor tujuan."""
 
@@ -77,17 +84,12 @@ class DigiposReqListPaketData(DigiposBasePackageRequest):
         return self
 
 
-class DigiposReqBuyPaketData(BaseDomainRequest):
+class DigiposReqBuyPaketData(DigiposBasePackageRequest, DigiposOptionalCheck):
     """Request Schemas ketika user ingin membeli Paket Data."""
 
     product_id: str = Field(
         description="ID produk paket data yang ingin dibeli.",
         examples=["1234567890"],
-    )
-
-    check: CheckFieldIsZeroOrOne = Field(
-        description="Apakah ingin melakukan pengecekan sebelum pembelian? 1 untuk ya, 0 untuk tidak.",
-        examples=[1, 0],
     )
 
 
