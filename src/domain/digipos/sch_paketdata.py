@@ -1,8 +1,14 @@
 from enum import StrEnum
 from typing import Any
 
-from pydantic import Field, PositiveInt, field_validator, model_validator
+from pydantic import Field, PositiveInt, model_validator
 
+from src.domain.digipos.base_validator import (
+    CheckFieldIsZeroOrOne,
+    LinkajaOnlyPaymentMethod,
+    MarkUpIsZeroOrMore,
+    PaymentMethodEnum,
+)
 from src.schemas.base_schemas import BaseDomainRequest, BaseDomainResponse
 
 
@@ -21,20 +27,29 @@ class PackageCategoryEnum(StrEnum):
     HVC_VOICE_SMS = "HVC_VOICE_SMS"
 
 
-class PaymentMethodEnum(StrEnum):
-    """payment method yang boleh user pilih di request."""
-
-    LINKAJA = "LINKAJA"
-    NGRS = "NGRS"
-
-
-class DigiposReqListPaketData(BaseDomainRequest):
-    """Request Schemas ketika user ingin memlihat List Paket eligible untuk nomor tujuan."""
+class DigiposBasePackageRequest(BaseDomainRequest):
+    """common shared Schemas , biar ngga Dry Aja Sih."""
 
     category: PackageCategoryEnum = Field(
         description="Kategori paket yang ingin dilihat, seperti DATA, VOICE_SMS, DIGITAL_OTHER, dll.",
         examples=[PackageCategoryEnum.DATA, PackageCategoryEnum.VOICE_SMS],
     )
+
+    payment_method: LinkajaOnlyPaymentMethod = Field(
+        description="Metode pembayaran yang digunakan, seperti LINKAJA atau NGRS.",
+        examples=[PaymentMethodEnum.LINKAJA, PaymentMethodEnum.NGRS],
+    )
+
+    markup: MarkUpIsZeroOrMore | None = Field(
+        default=0,
+        description="Markup harga untuk paket data.",
+        examples=[0, 10000],
+    )
+
+
+class DigiposReqListPaketData(DigiposBasePackageRequest):
+    """Request Schemas ketika user ingin memlihat List Paket eligible untuk nomor tujuan."""
+
     sub_category: str | None = Field(
         default=None,
         description="Subkategori produk, jika ada. Misalnya, untuk kategori DATA bisa berupa Combo Sakti Dan Lain Lain.",
@@ -46,60 +61,31 @@ class DigiposReqListPaketData(BaseDomainRequest):
         description="Durasi paket, jika ada. Misalnya, '30 hari', '7 hari'.",
         examples=["30 Days", "7 Days", None],
     )
-    payment_method: PaymentMethodEnum = Field(
-        description="Metode pembayaran yang digunakan, seperti LINKAJA atau NGRS.",
-        examples=[PaymentMethodEnum.LINKAJA, PaymentMethodEnum.NGRS],
-    )
-
-    up_harga: PositiveInt | None = Field(
-        default=0,
-        description="Harga Untuk Melakukan Markup kepada harga paket data.",
-        examples=[0, 10000],
-    )
 
     kolom: list[str] = Field(
         default_factory=lambda: ["productId", "productName", "quota", "total_"]
     )
 
     @model_validator(mode="after")
-    def validate_rules(self) -> "DigiposReqListPaketData":
-        # 1. Validasi untuk paket DATA
-        if (
-            self.category == PackageCategoryEnum.DATA
-            and self.payment_method != PaymentMethodEnum.LINKAJA
-        ):
-            raise ValueError(
-                "Paket DATA hanya boleh menggunakan LINKAJA sebagai payment_method."
-            )
-
-        # 2. Validasi untuk kolom wajib
+    def validate_required_kolom(self) -> "DigiposReqListPaketData":
         required = {"productId", "productName", "quota", "total_"}
         if not required.issubset(set(self.kolom)):
             missing = required - set(self.kolom)
             raise ValueError(
                 f"Field kolom harus mengandung minimal: {', '.join(required)}. Missing: {', '.join(missing)}"
             )
-
         return self
 
 
 class DigiposReqBuyPaketData(BaseDomainRequest):
     """Request Schemas ketika user ingin membeli Paket Data."""
 
-    category: PackageCategoryEnum = Field(
-        description="Kategori paket yang ingin dibeli, seperti DATA, VOICE_SMS, DIGITAL_OTHER, dll.",
-        examples=[PackageCategoryEnum.DATA, PackageCategoryEnum.VOICE_SMS],
-    )
-
     product_id: str = Field(
         description="ID produk paket data yang ingin dibeli.",
         examples=["1234567890"],
     )
-    payment_method: PaymentMethodEnum = Field(
-        description="Metode pembayaran yang digunakan, seperti LINKAJA atau NGRS.",
-        examples=[PaymentMethodEnum.LINKAJA, PaymentMethodEnum.NGRS],
-    )
-    check: int = Field(
+
+    check: CheckFieldIsZeroOrOne = Field(
         description="Apakah ingin melakukan pengecekan sebelum pembelian? 1 untuk ya, 0 untuk tidak.",
         examples=[1, 0],
     )
@@ -108,19 +94,6 @@ class DigiposReqBuyPaketData(BaseDomainRequest):
         description="Harga Untuk Melakukan Markup kepada harga paket data.",
         examples=[0, 10000],
     )
-
-    @field_validator("check")
-    @classmethod
-    def validate_check(cls, v: int) -> int:
-        if v not in (0, 1):
-            raise ValueError("Field 'check' hanya boleh bernilai 0 atau 1.")
-        return v
-
-    @model_validator(mode="after")
-    def check_payment_method(self) -> "DigiposReqBuyPaketData":
-        if self.payment_method == PaymentMethodEnum.NGRS:
-            raise ValueError("Pembelian paket data hanya mendukung LINKAJA saat ini.")
-        return self
 
 
 class DigiposResponse(BaseDomainResponse):
