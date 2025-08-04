@@ -1,8 +1,7 @@
 """ini setup logika bussines ya , bukan untuk application level config."""
 
 # ruff: noqa ARG003
-from dataclasses import Field
-from email.policy import default
+from functools import lru_cache
 from pydantic import BaseModel
 from pydantic_settings import (
     BaseSettings,
@@ -15,7 +14,7 @@ from pydantic_settings import (
 class ModuleConfig(BaseModel):
     name: str
     base_url: str
-    method: str = ("GET")
+    method: str = "GET"
     timeout: int
     max_retries: int
     seconds_between_retries: int
@@ -41,6 +40,7 @@ class ModuleSettings(BaseSettings):
         return (TomlConfigSettingsSource(settings_cls),)
 
 
+@lru_cache
 def get_settings() -> ModuleSettings:
     """Get the module settings instance."""
     return ModuleSettings()  # type: ignore
