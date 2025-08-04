@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from src.schemas.base import BaseDomainRequest
 
@@ -85,6 +85,11 @@ class DigiposReqListPaketData(BaseDomainRequest):
 class DigiposReqBuyPaketData(BaseDomainRequest):
     """Request Schemas ketika user ingin membeli Paket Data."""
 
+    category: PackageCategoryEnum = Field(
+        description="Kategori paket yang ingin dibeli, seperti DATA, VOICE_SMS, DIGITAL_OTHER, dll.",
+        examples=[PackageCategoryEnum.DATA, PackageCategoryEnum.VOICE_SMS],
+    )
+
     product_id: str = Field(
         description="ID produk paket data yang ingin dibeli.",
         examples=["1234567890"],
@@ -93,6 +98,22 @@ class DigiposReqBuyPaketData(BaseDomainRequest):
         description="Metode pembayaran yang digunakan, seperti LINKAJA atau NGRS.",
         examples=[PaymentMethodEnum.LINKAJA, PaymentMethodEnum.NGRS],
     )
+    check: int = Field(
+        description="Apakah ingin melakukan pengecekan sebelum pembelian? 1 untuk ya, 0 untuk tidak.",
+        examples=[1, 0],
+    )
+    up_harga: int | None = Field(
+        default=0,
+        description="Harga Untuk Melakukan Markup kepada harga paket data.",
+        examples=[0, 10000],
+    )
+
+    @field_validator("check")
+    @classmethod
+    def validate_check(cls, v: int) -> int:
+        if v not in (0, 1):
+            raise ValueError("Field 'check' hanya boleh bernilai 0 atau 1.")
+        return v
 
     @model_validator(mode="after")
     def check_payment_method(self) -> "DigiposReqBuyPaketData":
