@@ -68,4 +68,3 @@ async def parse_list_paket(
         log_error(exc, "[listpaket] ERROR: Unhandled exception")
         traceback.print_exc()
         raise
-
