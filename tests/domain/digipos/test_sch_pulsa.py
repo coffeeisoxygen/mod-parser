@@ -17,11 +17,11 @@ def test_valid_list_pulsa():
         trxid="TRX123",
         amount=10000,
         payment_method=PaymentMethodEnum.LINKAJA,
-        up_harga=2000,
+        markup=2000,
     )
     assert req.amount == 10000
     assert req.payment_method == PaymentMethodEnum.LINKAJA
-    assert req.up_harga == 2000
+    assert req.markup == 2000
 
 
 def test_invalid_list_pulsa_payment_method():
@@ -43,7 +43,7 @@ def test_valid_buy_pulsa_fix():
         trxid="TRX123",
         category=PulsaPackageCategoryEnum.FIX,
         payment_method=PaymentMethodEnum.NGRS,
-        up_harga=0,
+        markup=0,
         check=1,
     )
     assert req.category == PulsaPackageCategoryEnum.FIX
@@ -58,12 +58,12 @@ def test_valid_buy_pulsa_bulk():
         trxid="TRX123",
         category=PulsaPackageCategoryEnum.BULK,
         payment_method=PaymentMethodEnum.LINKAJA,
-        up_harga=1000,
+        markup=1000,
         check=0,
     )
     assert req.category == PulsaPackageCategoryEnum.BULK
     assert req.payment_method == PaymentMethodEnum.LINKAJA
-    assert req.up_harga == 1000
+    assert req.markup == 1000
     assert req.check == 0
 
 
@@ -76,7 +76,7 @@ def test_invalid_buy_pulsa_category_payment():
             trxid="TRX123",
             category=PulsaPackageCategoryEnum.FIX,
             payment_method=PaymentMethodEnum.LINKAJA,
-            up_harga=0,
+            markup=0,
             check=1,
         )
     assert "category FIX, payment_method wajib NGRS" in str(exc_info.value)
@@ -88,7 +88,7 @@ def test_invalid_buy_pulsa_category_payment():
             trxid="TRX123",
             category=PulsaPackageCategoryEnum.BULK,
             payment_method=PaymentMethodEnum.NGRS,
-            up_harga=0,
+            markup=0,
             check=0,
         )
     assert "category BULK, payment_method wajib LINKAJA" in str(exc_info.value)
