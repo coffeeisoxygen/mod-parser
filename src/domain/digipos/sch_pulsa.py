@@ -4,11 +4,11 @@ from typing import Any
 from pydantic import Field, PositiveInt, model_validator
 
 from src.domain.digipos.base_validator import (
-    CheckFieldIsZeroOrOne,
     LinkajaOnlyPaymentMethod,
     MarkUpIsZeroOrMore,
     PaymentMethodEnum,
 )
+from src.domain.digipos.sch_paketdata import DigiposOptionalCheck
 from src.schemas.base_schemas import BaseDomainRequest, BaseDomainResponse
 
 
@@ -38,7 +38,7 @@ class DigiposReqListPulsa(BaseDomainRequest):
     )
 
 
-class DigiposReqBuyPulsa(BaseDomainRequest):
+class DigiposReqBuyPulsa(BaseDomainRequest, DigiposOptionalCheck):
     """schemas untuk membeli pulsa."""
 
     category: PulsaPackageCategoryEnum = Field(
@@ -54,10 +54,6 @@ class DigiposReqBuyPulsa(BaseDomainRequest):
         default=0,
         description="Harga Untuk Melakukan Markup kepada harga pulsa.",
         examples=[0, 10000],
-    )
-    check: CheckFieldIsZeroOrOne = Field(
-        description="Check untuk memastikan Harga pulsa yang dibeli valid. 1 untuk validasi, 0 untuk tidak.",
-        examples=[0, 1],
     )
 
     @model_validator(mode="after")
